@@ -1,2 +1,7 @@
 # TS-PPTIS
-New implementation of TS-PPTIS working with Gromacs 5.X and Plumed 2.X
+
+New implementation of TS-PPTIS for Gromacs 5.X and Plumed 2.X
+Based on scripts by G. Saladino and J. Juraszek @2014-2016 
+
+For Reference, see 
+Juraszek J, Saladino G, van Erp TS, and Gervasio FL, "Efficient numerical reconstruction of protein folding kinetics with partial path sampling and pathlike variables." Phys Rev Lett. 2013 Mar 8;110(10):108106.
