@@ -19,20 +19,20 @@ from __future__ import division
 
 import sys
 import os
+import shutil # for removing directory tree
 import subprocess
 import numpy as np
-
 import matplotlib.pyplot as plt
-
 import mdtraj as md
-
 from tools import *
 
+# Print debug info
+debug = True
 
 class tsSetup:
     """ Standard TS-PPTIS setup class. """
 
-    def __init__(self, top, gro, traj, colvar, windows, ndx='', gmx='$GMX'):
+    def __init__(self, top, gro, traj, colvar, windows, par, ndx='', gmx='$GMX'):
         """Initialise TS-PPTIS.
         Args:
                 top (string): path to topology file .top
@@ -45,6 +45,7 @@ class tsSetup:
                 gmx (string, optional): path to the local gromacs executable.
 
         """
+        if debug: print '# ' + timestamp()
 
         """Check and load trajectory data."""
         try:
@@ -60,7 +61,7 @@ class tsSetup:
         """Check and load colvar file."""
         if os.path.isfile(colvar):
             self.colvar = colvar
-            self.trajCV = parseColvar(colvar)
+            self.trajCV = parseColvar(colvar) # Might not be needed at this point. G.
         else:
             print 'COLVAR file:\t\t\tnot found'
 
@@ -74,9 +75,19 @@ class tsSetup:
         """Check ndx file."""
         if os.path.isfile(ndx):
             self.ndx = ndx
+            print "ndx file:\t\t\tOK"
         else:
             self.ndx = ''
             print 'nxd file:\t\t\tnot found'
+
+        """Check for par file, if not foung generate from COLVAR"""
+        if os.path.isfile(par):
+            print "PAR file:\t\t\tOK"
+        else:
+            print "PAR file:\t\t\tnot found...generating it...",
+            generatePar(colvar,par)
+            print "OK"
+        self.par = par
 
         """Check local gromacs installation."""
         self.gmx = findExe(gmx)
@@ -86,86 +97,75 @@ class tsSetup:
             sys.exit('Error : invalid gmx path ' + gmx + '\n' +
                      'Make sure to have a working version of gromacs 5.X installed!')
 
-    def genConfig(self):
-        """Generate a dictionary with paths and configs. DO WE REALLY WANT IT?"""
-        self.config = {'top': self.top, 'gro': self.gro, 'traj': self.traj, 'colvar': self.colvar,
-                       'winlist': self.winList, 'ndx': self.ndx, 'gmx': self.gmx}
 
-        return self.config
-
-
-    def findNearest(self, array, value):
-        """ Find nearest value in an array."""
-        idx = (np.abs(array-value)).argmin()
-        return array[idx]
-
-    def extractFrame(self, cvValue, trajFile='',  top='', colvarFile='', outFile='out.pdb', trajStride=1, colvarStride=1, save=True):
-        """Extract a frame with a given CV value from a trajectory. If files are not specified
-        it will load self.trajData e self.trajCV. The function looks for the frame with the closest CV values
+    def initWindow(self, path, window, overwrite=False):
+        """Initialize a window
 
         Args:
-            cvValue (float/list/tuple): CV value or CV range
-            trajFile (string): trajectory file.
-            top (string): topology for mdtraj.
-            colvarFile (string): COLVAR file
-            outFile (string): output file name
-            trajStride (int): trajectory stride
-            colvarStride (int): COLVAR stride
-            save (bool): Whether to save the frame or not
-
-        Returns:
-            frames (int): frame number
-            frameCV (float): frame CV value
+            path (string): path of the window directory
+            window (list): interfaces of the window
+            overwrite (bool): whether to overwrite existing folder
 
         """
 
-        # if trajFile is not provided load traj from self.trajData
-        if not trajFile:
-            traj = self.trajData
-        else:
-            traj = md.load(trajFile,top=top)
+        print "Initialising window", path
 
-        # if colvarFile is not provided load COLVAR from self.trajCV
-        if not colvarFile:
-            colvar = self.trajCV
-        else:
-            colvar = parseColvar(colvarFile)
+        # Check if folder exists and if overwriting is allowed
+        if os.path.isdir(path):
+            if overwrite:
+                print "\tFolder exists, overwriting."
+                shutil.rmtree(path)
+            else:
+                sys.exit('Refusing to overwrite directory')
 
-        # Subsample trajectory or COLVAR depending on who has higher stride
-        # in order to have (almost) equal number of frames and colvar lines
+        # Check length of interface list
+        if len(window) != 3:
+            sys.exit('Too many elements as window interfaces')
 
-        # NEEDS MORE WORK
-        if trajStride > colvarStride:
-            stride = int(trajStride/colvarStride)
-            colvar = colvar[::stride]
-        else:
-            stride = int( colvarStride/trajStride)
-            traj = traj[::stride]
+        # Add trailing / to path if not provided
+        if path[-1] != '/': path += '/'
 
-        # IF cvValue is a float look for the value, else for the inclusive range
-        if type(cvValue) == float:
-            framesCV = self.findNearest(colvar[:,1],cvValue)
-            frames = np.where(colvar[:,1] == frameCV)[0]
-        else:
-            cvEntries = np.where(np.logical_and((colvar[:,1] >= cvValue[0]),(colvar[:,1] <= cvValue[1])))[0]
-            framesCV = colvar[cvEntries,1]
-            frames = cvEntries
+        # Create the list of folders
+        windowTree = [path, path+'data/', path+'run/', path+'temp/']
+        for folder in windowTree:
+            os.makedirs(folder)
 
-        if save: traj[frames].save(outFile)
+        # In the data/ directory create symlinks to the initial
+        # trajectory data
+        os.symlink(os.path.abspath(self.traj),
+                path+'data/00000.'+self.traj.split('.')[-1])
+        os.symlink(os.path.abspath(self.colvar),
+                path+'data/00000.cv')
+        os.symlink(os.path.abspath(self.par),
+                path+'data/00000.par')
 
-        return frames, framesCV
+        # Initialize a config file. Can be useful for storing paths and
+        # various configurations. See the config file in the old implementation
+        with open(path+'window.cfg','w') as handle:
+            initText = '# %s\ninterfaces = %s\n' % (timestamp(), ':'.join(map(str,window)))
+            handle.write(initText)
 
 
 def testAll():
 
+    # Test initialisation
     ts = tsSetup('../testfiles/topol.top',
                  '../testfiles/system.gro',
                  '../testfiles/traj_fixed.xtc',
                  '../testfiles/COLVAR',
                  '../testfiles/windows.dat',
+                 '../testfiles/traj.par',
                  gmx='gmx')
-    print ts.extractFrame([0,1.2], trajFile='../testfiles/traj_fixed_skipped.xtc',top='../testfiles/system.gro',
-            outFile='../testfiles/out.pdb',trajStride=10,colvarStride=1)
+
+    # Test extractFrame
+#    print extractFrame([0,1.2],
+#            trajFile='../testfiles/traj_fixed_skipped.xtc',
+#            topFile='../testfiles/system.gro',
+#            colvarFile='../testfiles/COLVAR',
+#            outFile='../testfiles/out.pdb',trajStride=10,colvarStride=1)
+
+    # Test initialising a window
+    ts.initWindow('../testfiles/pptis10',[0,1,2], overwrite=True)
 
 if __name__ == "__main__":
 
