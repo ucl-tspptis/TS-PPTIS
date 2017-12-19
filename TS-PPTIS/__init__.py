@@ -120,7 +120,7 @@ class tsSetup:
 
         # Check length of interface list
         if len(window) != 3:
-            sys.exit('Too many elements as window interfaces')
+            sys.exit('Wrong number of elements as window interfaces')
 
         # Add trailing / to path if not provided
         if path[-1] != '/': path += '/'
