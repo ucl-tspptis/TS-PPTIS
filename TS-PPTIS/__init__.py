@@ -145,8 +145,16 @@ class tsSetup:
             handle.write(initText)
 
     def setUpTPS(self,path):
+        """Setup a TPS run
+        
+        Args:
+            path (string): path of the window directory
+            
+        """
+        
         if path[-1] != '/': path+= '/'
-        """Check if the folder is a ts-pptis window."""
+        
+        # Determine whether the folder is a window by the presence of window.cfg
         if os.path.isfile(path+'window.cfg'):
             print SectionDelimiter("SETUP RUN")
         else:
@@ -155,11 +163,11 @@ class tsSetup:
         print 'Setting up run in:\t\t', path
 
         continuation = False
-
+        # Open tps_acc.log, which holds info about accepted trajectories
         tpsAccHandle = open(path+'tps_acc.log','a+')
-        tpsAccLines = sum([1 for line in tpsAccHandle])
+        tpsAccLines = sum([1 for line in tpsAccHandle]) # Number of accepted trajectories
 
-        if tpsAccLines > 1: continuation = True
+        if tpsAccLines > 1: continuation = True # The first is the initial so, > 1 is continuation
 
         print 'First run:\t\t\t',not continuation
 
@@ -168,7 +176,9 @@ class tsSetup:
 
 
         if not continuation:
+            # Get number of frames of the initial trajectory.
             pathLength = len(self.trajData)
+            # Write first line of tps_acc.log. Using same structure as previous implementation
             tpsAccHandle.write(('0     0000       -          initial    1 '
                                 '{:>6} 1.0000   A  B  1   0.00       0     -      1 1 1 1'
                                 '\n').format(pathLength))
