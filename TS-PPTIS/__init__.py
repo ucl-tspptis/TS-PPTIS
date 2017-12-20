@@ -26,9 +26,6 @@ import matplotlib.pyplot as plt
 import mdtraj as md
 from tools import *
 
-# Print debug info
-debug = True
-
 class tsSetup:
     """ Standard TS-PPTIS setup class. """
 
@@ -45,7 +42,8 @@ class tsSetup:
                 gmx (string, optional): path to the local gromacs executable.
 
         """
-        if debug: print '# ' + timestamp()
+
+        print SectionDelimiter("INITIALISATION")
 
         """Check and load trajectory data."""
         try:
@@ -98,6 +96,7 @@ class tsSetup:
                      'Make sure to have a working version of gromacs 5.X installed!')
 
 
+
     def initWindow(self, path, window, overwrite=False):
         """Initialize a window
 
@@ -108,12 +107,12 @@ class tsSetup:
 
         """
 
-        print "Initialising window", path
+        print "Initialising window:\t\t", path
 
         # Check if folder exists and if overwriting is allowed
         if os.path.isdir(path):
             if overwrite:
-                print "\tFolder exists, overwriting."
+                print "Folder exists, overwriting."
                 shutil.rmtree(path)
             else:
                 sys.exit('Refusing to overwrite directory')
@@ -145,6 +144,52 @@ class tsSetup:
             initText = '# %s\ninterfaces = %s\n' % (timestamp(), ':'.join(map(str,window)))
             handle.write(initText)
 
+    def setUpTPS(self,path):
+        if path[-1] != '/': path+= '/'
+        """Check if the folder is a ts-pptis window."""
+        if os.path.isfile(path+'window.cfg'):
+            print SectionDelimiter("SETUP RUN")
+        else:
+            sys.exit('Error: the folder does not seem to be a TS-PPTIS window')
+
+        print 'Setting up run in:\t\t', path
+
+        continuation = False
+
+        tpsAccHandle = open(path+'tps_acc.log','a+')
+        tpsAccLines = sum([1 for line in tpsAccHandle])
+
+        if tpsAccLines > 1: continuation = True
+
+        print 'First run:\t\t\t',not continuation
+
+        config = parseConfig(path+'window.cfg')
+        print 'Interfaces:\t\t\t', config['interfaces']
+
+
+        if not continuation:
+            pathLength = len(self.trajData)
+            tpsAccHandle.write(('0     0000       -          initial    1 '
+                                '{:>6} 1.0000   A  B  1   0.00       0     -      1 1 1 1'
+                                '\n').format(pathLength))
+
+            # TODO:
+            # WHATEVER HAPPENS IF IT IS THE FIRST RUN
+        else:
+            # TODO:
+            # WHATEVER HAPPENS IF IT IS NOT THE FIRST RUN
+            pass
+            # in both cases, roughly, **I believe**:
+            # determining previous path length, selecting random frame,
+            # determining the LPF of the selected frame (whether BW or FW, use PAR file)
+            # setting tmap (maximum duration of current run) with
+            # path_length/random(),
+            # extracting random frame, randomising velocities, generating a reversed TPR
+            # for the BW trajectory
+        print "Path length:\t\t\t", pathLength
+
+        tpsAccHandle.close()
+
 
 def testAll():
 
@@ -166,6 +211,8 @@ def testAll():
 
     # Test initialising a window
     ts.initWindow('../testfiles/pptis10',[0,1,2], overwrite=True)
+
+    ts.setUpTPS('../testfiles/pptis10')
 
 if __name__ == "__main__":
 

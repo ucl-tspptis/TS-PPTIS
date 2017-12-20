@@ -219,6 +219,15 @@ def generatePar(colvarFile, parFile, direction=''):
         for i in range(0, len(colvar)):
             handle.write('    '.join(map(str,np.append(colvar[i],direction[i])))+ '\n')
 
+def SectionDelimiter(title, size=80, char='-'):
+    """Prints the section title"""
+    title = '[ '+title+' ]'
+    titleLen = len(title)
+    now = timestamp()
+    if len(title) > size-len(now)-1: sys.exit('Title too long')
+
+    return char*int(np.floor((size-titleLen)/2)) + title + char*int(np.ceil((size-titleLen)/2)- len(now)) + now
+
 
 if __name__ == "__main__":
 
