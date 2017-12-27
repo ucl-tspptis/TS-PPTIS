@@ -38,6 +38,8 @@ class tsSetup:
                 colvar (string): path to the colvar file of the input trajectory
                 windows (string): path to text file containing information
                 on the windows in the format left:center:right
+		par (string): path to file containing frame time, CV value and
+                   forward/backward direction information.
                 ndx (string, optional): path to groups definition file .ndx
                 gmx (string, optional): path to the local gromacs executable.
 
@@ -45,7 +47,15 @@ class tsSetup:
 
         print SectionDelimiter("INITIALISATION")
 
-        """Check and load trajectory data."""
+        """Check local gromacs installation."""
+        self.gmx = findExe(gmx)
+        if self.gmx != None:
+            print 'Gromacs installation:\t\tOK'
+        else:
+            sys.exit('Error : invalid gmx path ' + gmx + '\n' +
+                     'Make sure to have a working version of gromacs 5.X installed!')
+        
+	"""Check and load trajectory data."""
         try:
             self.top = top
             self.gro = gro
@@ -60,7 +70,9 @@ class tsSetup:
         if os.path.isfile(colvar):
             self.colvar = colvar
             self.trajCV = parseColvar(colvar) # Might not be needed at this point. G.
+            print 'COLVAR file=:\t\t\tOK'
         else:
+	    self.colvar= None
             print 'COLVAR file:\t\t\tnot found'
 
         """Check and load windows file."""
@@ -82,19 +94,11 @@ class tsSetup:
         if os.path.isfile(par):
             print "PAR file:\t\t\tOK"
         else:
-            print "PAR file:\t\t\tnot found...generating it...",
-            generatePar(colvar,par)
+            print "PAR file:\t\t\tnot found, it will be generated...",
+            if self.colvar!=None:
+            	generatePar(self.colvar,par)
             print "OK"
         self.par = par
-
-        """Check local gromacs installation."""
-        self.gmx = findExe(gmx)
-        if self.gmx != None:
-            print 'Gromacs installation:\t\tOK'
-        else:
-            sys.exit('Error : invalid gmx path ' + gmx + '\n' +
-                     'Make sure to have a working version of gromacs 5.X installed!')
-
 
 
     def initWindow(self, path, window, overwrite=False):
@@ -202,6 +206,7 @@ class tsSetup:
 
 
 def testAll():
+    """ Runs a standard set of commands to test the correct functioning of TS-PPTIS. """
 
     # Test initialisation
     ts = tsSetup('../testfiles/topol.top',

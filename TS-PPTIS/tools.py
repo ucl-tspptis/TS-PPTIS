@@ -19,7 +19,6 @@ import mdtraj as md
 import datetime
 
 def parseWindows(nameFile):
-
     """Parse a text file containing information on the TS-PPTIS windows.
 
     Args:
@@ -44,7 +43,6 @@ def parseWindows(nameFile):
 
 
 def parseColvar(colvar):
-
     """Parse COLVAR files
 
     Args:
@@ -57,7 +55,7 @@ def parseColvar(colvar):
 
     outList = []
     data = open(colvar, 'r')
-
+    
     for line in data.readlines():
         if line[0] != '#':
             outList.append(
@@ -66,10 +64,12 @@ def parseColvar(colvar):
 
     data.close()
 
-    return np.array(outList)
+    # Remove duplicate timesteps UNTESTED!
+    u, uIndeces = np.unique([l[0] for l in outList], return_index=True)
+
+    return np.array(outList[uIndeces])
 
 def parseConfig(config):
-
     """Parse config file
 
     Args:
@@ -94,7 +94,6 @@ def parseConfig(config):
 
 
 def isExe(path):
-
     """Check if program exists and is executable.
 
     Args:
@@ -107,18 +106,17 @@ def isExe(path):
     return os.path.isfile(path) and os.access(path, os.X_OK)
 
 def findExe(fileName):
-
     """Finds the full path of a program and check if it is executable.
 
     Args:
         fileName (string): name of the program or path pointing to it.
 
     Returns:
-        (string): full path to the program if it exists..
+        (string): full path to the program if it exists.
 
     """
 
-    """In case it's an alias."""
+    #In case it's an alias
     if fileName.startswith('$'):
         p=subprocess.Popen('which '+fileName,shell=True,stdout=subprocess.PIPE)
         fileName=p.communicate()[0][:-1]
@@ -138,11 +136,13 @@ def findExe(fileName):
 
 def findNearest(array, value):
     """Find nearest value in an array."""
+    
     idx = (np.abs(array-value)).argmin()
     return array[idx]
 
 def timestamp():
     """Print timestamp in the YYYY:MM:DD HH:MM:SS format."""
+
     return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 def extractFrame(cvValue, trajFile, topFile, colvarFile, outFile='out.pdb', trajStride=1, colvarStride=1, save=True):
@@ -151,13 +151,13 @@ def extractFrame(cvValue, trajFile, topFile, colvarFile, outFile='out.pdb', traj
 
     Args:
         cvValue (float/list/tuple): CV value or CV range
-        trajFile (string): trajectory file.
+        trajFile (string): trajectory file name
         topFile (string): topology for mdtraj.
-        colvarFile (string): COLVAR file
-        outFile (string): output file name
-        trajStride (int): trajectory stride
-        colvarStride (int): COLVAR stride
-        save (bool): Whether to save the frame or not
+        colvarFile (string): COLVAR file name
+        outFile (string, optional): output file name
+        trajStride (int, optional): trajectory stride
+        colvarStride (int, optional): COLVAR stride
+        save (bool, optional): Whether to save the frame or not
 
     Returns:
         frames (numpy array): frame number
@@ -165,20 +165,26 @@ def extractFrame(cvValue, trajFile, topFile, colvarFile, outFile='out.pdb', traj
 
     """
 
+    # In theory traj is already loadd in trajData, am I right? So passing self we already 
+    # have all the information... let's fix this if this is the case.
+
     traj = md.load(trajFile,top=topFile)
     colvar = parseColvar(colvarFile)
 
     # Subsample trajectory or COLVAR depending on who has highest stride
     # in order to have (almost) equal number of frames and colvar lines
 
-    # NEEDS MORE WORK
-    if trajStride > colvarStride:
-        stride = int(trajStride/colvarStride)
-        colvar = colvar[::stride]
+    if trajStride=None or colvarStride=None:
+        # Guess stride UNTESTED!
+        ratio= traj.n_frames*1.0/len(colvar)
     else:
-        stride = int( colvarStride/trajStride)
-        traj = traj[::stride]
+        ratio= trajStride*1.0/colvarStride
 
+    if ratio<1: 
+        traj= traj[::int(1.0/ratio)]
+    else:
+        colvar= colvar[::int(ratio)]
+ 
     # IF cvValue is a float look for the value, else for the inclusive range
     if type(cvValue) == float:
         framesCV = self.findNearest(colvar[:,1],cvValue)
@@ -193,18 +199,15 @@ def extractFrame(cvValue, trajFile, topFile, colvarFile, outFile='out.pdb', traj
     return frames, framesCV
 
 def generatePar(colvarFile, parFile, direction=''):
-    """Generate PAR file from a COLVAR file
+    """Generate and save a PAR file starting from a COLVAR file
 
     Args:
-        colvarFile (string): COLVAR file
-        parFile (string): output PAR file
+        colvarFile (string): COLVAR file name
+        parFile (string): output PAR file name
         direction (list): list of directions for each frame.
             If not provided FW direction is assumed.
 
     """
-
-    # In the previous implementation a PAR file is a file
-    # containing frame time, CV value and FW/BW direction information.
 
     colvar =  parseColvar(colvarFile)
 
@@ -221,6 +224,7 @@ def generatePar(colvarFile, parFile, direction=''):
 
 def SectionDelimiter(title, size=80, char='-'):
     """Prints the section title"""
+
     title = '[ '+title+' ]'
     titleLen = len(title)
     now = timestamp()
