@@ -20,7 +20,7 @@ from __future__ import division
 import sys
 import os
 import shutil # for removing directory tree
-import subprocess
+import subprocess as sub
 import numpy as np
 import matplotlib.pyplot as plt
 import mdtraj as md
@@ -29,7 +29,7 @@ from tools import *
 class tsSetup:
     """ Standard TS-PPTIS setup class. """
 
-    def __init__(self, top, gro, traj, colvar, windows, par, ndx='', gmx='$GMX'):
+    def __init__(self, top, gro, traj, colvar, windows, par, mdp, ndx='', gmx='$GMX'):
         """Initialise TS-PPTIS.
         Args:
                 top (string): path to topology file .top
@@ -40,12 +40,13 @@ class tsSetup:
                 on the windows in the format left:center:right
 		par (string): path to file containing frame time, CV value and
                    forward/backward direction information.
+                mdp (string): mdp file for the MDs
                 ndx (string, optional): path to groups definition file .ndx
                 gmx (string, optional): path to the local gromacs executable.
 
         """
 
-        print SectionDelimiter("INITIALISATION")
+        print sectionDelimiter("INITIALISATION")
 
         """Check local gromacs installation."""
         self.gmx = findExe(gmx)
@@ -69,10 +70,10 @@ class tsSetup:
         """Check and load colvar file."""
         if os.path.isfile(colvar):
             self.colvar = colvar
-            self.trajCV = parseColvar(colvar) # Might not be needed at this point. G.
-            print 'COLVAR file=:\t\t\tOK'
+            self.trajCV = parseTxt(colvar) # Might not be needed at this point. G.
+            print 'COLVAR file:\t\t\tOK'
         else:
-	    self.colvar= None
+            self.colvar= None
             print 'COLVAR file:\t\t\tnot found'
 
         """Check and load windows file."""
@@ -95,8 +96,8 @@ class tsSetup:
             print "PAR file:\t\t\tOK"
         else:
             print "PAR file:\t\t\tnot found, it will be generated...",
-            if self.colvar!=None:
-            	generatePar(self.colvar,par)
+            if self.colvar != None:
+                generatePar(self.colvar,par)
             print "OK"
         self.par = par
 
@@ -150,17 +151,17 @@ class tsSetup:
 
     def setUpTPS(self,path):
         """Setup a TPS run
-        
+
         Args:
             path (string): path of the window directory
-            
+
         """
-        
+
         if path[-1] != '/': path+= '/'
-        
+
         # Determine whether the folder is a window by the presence of window.cfg
         if os.path.isfile(path+'window.cfg'):
-            print SectionDelimiter("SETUP RUN")
+            print sectionDelimiter("SETUP RUN")
         else:
             sys.exit('Error: the folder does not seem to be a TS-PPTIS window')
 
@@ -182,10 +183,19 @@ class tsSetup:
         if not continuation:
             # Get number of frames of the initial trajectory.
             pathLength = len(self.trajData)
+            print "Path length:\t\t\t", pathLength
+
             # Write first line of tps_acc.log. Using same structure as previous implementation
             tpsAccHandle.write(('0     0000       -          initial    1 '
                                 '{:>6} 1.0000   A  B  1   0.00       0     -      1 1 1 1'
                                 '\n').format(pathLength))
+            # Define shooting point and dump gro file
+            point = shootingPoint(self.par, config['interfaces'])
+            print 'Shooting point:\t\t\t', point[1]
+            print 'Shooting frame:\t\t\t', point[0]
+            print 'Shooting frame LPF:\t\t', point[2]
+            extractFrame(point[1], self.traj, self.gro, self.colvar, path+'temp/frame.gro')
+
 
             # TODO:
             # WHATEVER HAPPENS IF IT IS THE FIRST RUN
@@ -200,7 +210,6 @@ class tsSetup:
             # path_length/random(),
             # extracting random frame, randomising velocities, generating a reversed TPR
             # for the BW trajectory
-        print "Path length:\t\t\t", pathLength
 
         tpsAccHandle.close()
 
@@ -215,6 +224,7 @@ def testAll():
                  '../testfiles/COLVAR',
                  '../testfiles/windows.dat',
                  '../testfiles/traj.par',
+                 '../testfiles/md.mdp',
                  gmx='gmx')
 
     # Test extractFrame
@@ -225,7 +235,7 @@ def testAll():
 #            outFile='../testfiles/out.pdb',trajStride=10,colvarStride=1)
 
     # Test initialising a window
-    ts.initWindow('../testfiles/pptis10',[0,1,2], overwrite=True)
+    ts.initWindow('../testfiles/pptis10',[0.5,1,2], overwrite=True)
 
     ts.setUpTPS('../testfiles/pptis10')
 

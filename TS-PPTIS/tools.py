@@ -42,7 +42,7 @@ def parseWindows(nameFile):
     return outList
 
 
-def parseColvar(colvar):
+def parseTxt(colvar):
     """Parse COLVAR files
 
     Args:
@@ -53,21 +53,12 @@ def parseColvar(colvar):
         outList (numpy array, float): list with time and colvar values
     """
 
-    outList = []
-    data = open(colvar, 'r')
-    
-    for line in data.readlines():
-        if line[0] != '#':
-            outList.append(
-                    map(float,
-                        filter(None, line.split(' '))))
-
-    data.close()
+    outList = np.loadtxt(colvar) # switched to np.loadtxt. More flexible
 
     # Remove duplicate timesteps UNTESTED!
     u, uIndeces = np.unique([l[0] for l in outList], return_index=True)
 
-    return np.array(outList[uIndeces])
+    return outList[uIndeces]
 
 def parseConfig(config):
     """Parse config file
@@ -169,26 +160,26 @@ def extractFrame(cvValue, trajFile, topFile, colvarFile, outFile='out.pdb', traj
     # have all the information... let's fix this if this is the case.
 
     traj = md.load(trajFile,top=topFile)
-    colvar = parseColvar(colvarFile)
+    colvar = parseTxt(colvarFile)
 
     # Subsample trajectory or COLVAR depending on who has highest stride
     # in order to have (almost) equal number of frames and colvar lines
 
-    if trajStride=None or colvarStride=None:
+    if trajStride == None or colvarStride == None:
         # Guess stride UNTESTED!
         ratio= traj.n_frames*1.0/len(colvar)
     else:
-        ratio= trajStride*1.0/colvarStride
+        ratio = trajStride*1.0/colvarStride
 
-    if ratio<1: 
-        traj= traj[::int(1.0/ratio)]
+    if ratio<1:
+        traj = traj[::int(1.0/ratio)]
     else:
-        colvar= colvar[::int(ratio)]
- 
+        colvar = colvar[::int(ratio)]
+
     # IF cvValue is a float look for the value, else for the inclusive range
     if type(cvValue) == float:
-        framesCV = self.findNearest(colvar[:,1],cvValue)
-        frames = np.where(colvar[:,1] == frameCV)[0]
+        framesCV = findNearest(colvar[:,1],cvValue)
+        frames = np.where(colvar[:,1] == framesCV)[0]
     else:
         cvEntries = np.where(np.logical_and((colvar[:,1] >= cvValue[0]),(colvar[:,1] <= cvValue[1])))[0]
         framesCV = colvar[cvEntries,1]
@@ -209,7 +200,7 @@ def generatePar(colvarFile, parFile, direction=''):
 
     """
 
-    colvar =  parseColvar(colvarFile)
+    colvar =  parseTxt(colvarFile)
 
     # If directions not provided assume FW direction
     if not direction:
@@ -222,7 +213,34 @@ def generatePar(colvarFile, parFile, direction=''):
         for i in range(0, len(colvar)):
             handle.write('    '.join(map(str,np.append(colvar[i],direction[i])))+ '\n')
 
-def SectionDelimiter(title, size=80, char='-'):
+def shootingPoint(parFile, interfaces):
+    """ Define shooting point picking random CV value in the window range
+    and extracting the closes frame in the CV space using the PAR file
+
+    Args:
+        parFile (string): PAR file of the trajectory
+        interfaces (string): window in the X:Y:Z format
+
+    Returns:
+        frame (int): frame number
+        CV values (float): cv value of the frame
+        lpf (int): whether the frame is FW or BW
+    """
+
+    # Is redefining a function argument very bad coding? G.
+    interfaces = np.array(map(float,interfaces.split(':')))[[0,2]]
+
+    # Read par file
+    par = parseTxt(parFile)
+    # Define shooting point CV value
+    point = np.random.uniform(interfaces[0], interfaces[1])
+    # Find closest frame
+    frame =  np.where( par[:,1] == findNearest(par[:,1], point))[0][0]
+
+    # return frame number, CV value, lpf
+    return frame, round(par[frame,1],3), int(par[frame,2])
+
+def sectionDelimiter(title, size=80, char='-'):
     """Prints the section title"""
 
     title = '[ '+title+' ]'
