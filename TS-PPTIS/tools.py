@@ -13,10 +13,15 @@ from __future__ import division
 
 import sys
 import os
-import subprocess
+import subprocess as sub
 import numpy as np
 import mdtraj as md
 import datetime
+
+
+# Used as cdw in Popen
+cwd = os.getcwd()
+
 
 def parseWindows(nameFile):
     """Parse a text file containing information on the TS-PPTIS windows.
@@ -31,7 +36,7 @@ def parseWindows(nameFile):
     """
 
     outList = []
-    data =open(nameFile,"r")
+    data = open(nameFile, "r")
 
     for line in data.readlines():
         outList.append([])
@@ -53,12 +58,13 @@ def parseTxt(colvar):
         outList (numpy array, float): list with time and colvar values
     """
 
-    outList = np.loadtxt(colvar) # switched to np.loadtxt. More flexible
+    outList = np.loadtxt(colvar)  # switched to np.loadtxt. More flexible
 
     # Remove duplicate timesteps UNTESTED!
     u, uIndeces = np.unique([l[0] for l in outList], return_index=True)
 
     return outList[uIndeces]
+
 
 def parseConfig(config):
     """Parse config file
@@ -70,7 +76,7 @@ def parseConfig(config):
         configDict (dict): dictionary with config entries
     """
 
-    data = open(config,'r')
+    data = open(config, 'r')
 
     configDict = {}
     for line in data.readlines():
@@ -81,7 +87,6 @@ def parseConfig(config):
     data.close()
 
     return configDict
-
 
 
 def isExe(path):
@@ -96,6 +101,7 @@ def isExe(path):
     """
     return os.path.isfile(path) and os.access(path, os.X_OK)
 
+
 def findExe(fileName):
     """Finds the full path of a program and check if it is executable.
 
@@ -107,15 +113,16 @@ def findExe(fileName):
 
     """
 
-    #In case it's an alias
+    # In case it's an alias
     if fileName.startswith('$'):
-        p=subprocess.Popen('which '+fileName,shell=True,stdout=subprocess.PIPE)
-        fileName=p.communicate()[0][:-1]
+        p = sub.Popen('which ' + fileName, shell=True, stdout=sub.PIPE)
+        fileName = p.communicate()[0][:-1]
 
     fpath, fname = os.path.split(fileName)
 
     if fpath:
-        if isExe(fileName): return fileName
+        if isExe(fileName):
+            return fileName
     else:
         for path in os.environ["PATH"].split(os.pathsep):
             fullPath = os.path.join(path, fileName)
@@ -127,14 +134,16 @@ def findExe(fileName):
 
 def findNearest(array, value):
     """Find nearest value in an array."""
-    
-    idx = (np.abs(array-value)).argmin()
+
+    idx = (np.abs(array - value)).argmin()
     return array[idx]
+
 
 def timestamp():
     """Print timestamp in the YYYY:MM:DD HH:MM:SS format."""
 
     return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
 
 def extractFrame(cvValue, trajFile, topFile, colvarFile, outFile='out.pdb', trajStride=1, colvarStride=1, save=True):
     """Extract a frame with a given CV value from a trajectory. If files are not specified
@@ -156,10 +165,10 @@ def extractFrame(cvValue, trajFile, topFile, colvarFile, outFile='out.pdb', traj
 
     """
 
-    # In theory traj is already loadd in trajData, am I right? So passing self we already 
+    # In theory traj is already loadd in trajData, am I right? So passing self we already
     # have all the information... let's fix this if this is the case.
 
-    traj = md.load(trajFile,top=topFile)
+    traj = md.load(trajFile, top=topFile)
     colvar = parseTxt(colvarFile)
 
     # Subsample trajectory or COLVAR depending on who has highest stride
@@ -167,27 +176,30 @@ def extractFrame(cvValue, trajFile, topFile, colvarFile, outFile='out.pdb', traj
 
     if trajStride == None or colvarStride == None:
         # Guess stride UNTESTED!
-        ratio= traj.n_frames*1.0/len(colvar)
+        ratio = traj.n_frames * 1.0 / len(colvar)
     else:
-        ratio = trajStride*1.0/colvarStride
+        ratio = trajStride * 1.0 / colvarStride
 
-    if ratio<1:
-        traj = traj[::int(1.0/ratio)]
+    if ratio < 1:
+        traj = traj[::int(1.0 / ratio)]
     else:
         colvar = colvar[::int(ratio)]
 
     # IF cvValue is a float look for the value, else for the inclusive range
     if type(cvValue) == float:
-        framesCV = findNearest(colvar[:,1],cvValue)
-        frames = np.where(colvar[:,1] == framesCV)[0]
+        framesCV = findNearest(colvar[:, 1], cvValue)
+        frames = np.where(colvar[:, 1] == framesCV)[0]
     else:
-        cvEntries = np.where(np.logical_and((colvar[:,1] >= cvValue[0]),(colvar[:,1] <= cvValue[1])))[0]
-        framesCV = colvar[cvEntries,1]
+        cvEntries = np.where(np.logical_and(
+            (colvar[:, 1] >= cvValue[0]), (colvar[:, 1] <= cvValue[1])))[0]
+        framesCV = colvar[cvEntries, 1]
         frames = cvEntries
 
-    if save: traj[frames].save(outFile)
+    if save:
+        traj[frames].save(outFile)
 
     return frames, framesCV
+
 
 def generatePar(colvarFile, parFile, direction=''):
     """Generate and save a PAR file starting from a COLVAR file
@@ -200,18 +212,20 @@ def generatePar(colvarFile, parFile, direction=''):
 
     """
 
-    colvar =  parseTxt(colvarFile)
+    colvar = parseTxt(colvarFile)
 
     # If directions not provided assume FW direction
     if not direction:
-        direction = [1]*len(colvar)
+        direction = [1] * len(colvar)
     elif len(direction) != len(colvar):
         sys.exit("COLVAR length and direction list do not have the same length")
 
     # Write PAR
-    with open(parFile,'w') as handle:
+    with open(parFile, 'w') as handle:
         for i in range(0, len(colvar)):
-            handle.write('    '.join(map(str,np.append(colvar[i],direction[i])))+ '\n')
+            handle.write('    '.join(
+                map(str, np.append(colvar[i], direction[i]))) + '\n')
+
 
 def shootingPoint(parFile, interfaces):
     """ Define shooting point picking random CV value in the window range
@@ -228,27 +242,160 @@ def shootingPoint(parFile, interfaces):
     """
 
     # Is redefining a function argument very bad coding? G.
-    interfaces = np.array(map(float,interfaces.split(':')))[[0,2]]
+    interfaces = np.array(map(float, interfaces.split(':')))[[0, 2]]
 
     # Read par file
     par = parseTxt(parFile)
     # Define shooting point CV value
     point = np.random.uniform(interfaces[0], interfaces[1])
     # Find closest frame
-    frame =  np.where( par[:,1] == findNearest(par[:,1], point))[0][0]
+    frame = np.where(par[:, 1] == findNearest(par[:, 1], point))[0][0]
 
     # return frame number, CV value, lpf
-    return frame, round(par[frame,1],3), int(par[frame,2])
+    return frame, round(par[frame, 1], 3), int(par[frame, 2])
+
 
 def sectionDelimiter(title, size=80, char='-'):
     """Prints the section title"""
 
-    title = '[ '+title+' ]'
+    title = '[ ' + title + ' ]'
     titleLen = len(title)
     now = timestamp()
-    if len(title) > size-len(now)-1: sys.exit('Title too long')
+    if len(title) > size - len(now) - 1:
+        sys.exit('Title too long')
 
-    return char*int(np.floor((size-titleLen)/2)) + title + char*int(np.ceil((size-titleLen)/2)- len(now)) + now
+    return char * int(np.floor((size - titleLen) / 2)) + title + char * int(np.ceil((size - titleLen) / 2) - len(now)) + now
+
+
+def runGmx(cmd, logFile, logLine='', cwd=cwd):
+    """ Run gromacs and save stdout and stderr to a logfile.
+        Prints timestamp and custom message before the stdout/err.
+
+    Args:
+        cmd (string or iterable): command as string or argument iterable
+        logFile (string): logfile
+        logLine (string): debug message
+
+    Returns:
+        proc.returncode (int): process return code
+
+    """
+    if type(cmd) == str:
+        cmd = cmd.split(' ')
+
+    logHandle = open(logFile, 'a+')
+    logHandle.write('\nDEBUG: %s\t%s\n' % (timestamp(), logLine))
+    logHandle.flush()
+
+    proc = sub.Popen(cmd, shell=False, stdout=logHandle,
+                     stderr=logHandle, cwd=cwd)
+    proc.wait()
+
+    logHandle.close()
+
+    if proc.returncode != 0:
+        sys.exit('''\n\n!!!! GROMACS returned exit code: %d !!!!
+Check the log file: \t%s
+In section: \t\t%s
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!''' % (proc.returncode, logFile, logLine))
+
+    return proc.returncode
+
+# --------------- GRO PARSING AND INVERTING -------------
+
+
+def parseGro(groFile, slices=None):
+    """ Returns a nested list with the gro fields.
+
+        Args:
+            gro (str): file name
+            slices (nested list, optional): list of fields' limits (semiopen intervals)
+
+        Returns:
+            grofields (nested list): gro file fields
+
+        The first two lines (title and atom number) and
+        the last (box size) will be added verbatim.
+
+        Assumes the standard number of decimals (3 for position,
+        4 for velocity). See http://manual.gromacs.org/current/online/gro.html
+        """
+
+    with open(groFile, 'r') as handle:
+        gro = handle.readlines()
+
+    # If none given, use standard gro file structure
+    if slices == None:
+        slices = [[0, 5],
+                  [5, 10],
+                  [10, 15],
+                  [15, 20],
+                  [20, 28],
+                  [28, 36],
+                  [36, 44],
+                  [44, 52],
+                  [52, 60],
+                  [60, 68]]
+
+    # Copy verbatim the fist two line
+    grofields = gro[:2]
+
+    for line in gro[2:-1]:
+        linefields = []
+        for s in slices:
+            # For every line and every field try converting to float.
+            # If it fails convert to string
+            field = line[s[0]:s[1]]
+            try:
+                field = float(field)
+            except:
+                field = str(field).strip()
+            linefields.append(field)
+        grofields.append(linefields)
+
+    # Append last line
+    grofields.append(gro[-1])
+    return grofields
+
+
+def formatGro(grofields):
+    """ Formats a parsed GRO file for writing
+
+        Args:
+            grofields (nested list): returned by parseGro
+
+        Returns:
+            text (string): formatted GRO
+
+        Uses standard GRO precision.
+    """
+    text = ''.join(map(str, grofields[:2]))
+    for line in grofields[2:-1]:
+        text += '%5d%-5s%5s%5d%8.3f%8.3f%8.3f%8.4f%8.4f%8.4f\n' % (
+            line[0], line[1], line[2],
+            line[3], line[4], line[5], line[6],
+            line[7], line[8], line[9])
+
+    text += grofields[-1]
+
+    return text
+
+
+def invertGro(grofields):
+    """ Inverts the velocity of the atoms
+
+        Args:
+            grofields (nested list): returned by parseGro
+
+        Returns:
+            grofields (nested list): modified list
+
+    """
+
+    for i in range(2, len(grofields) - 1):
+        grofields[i][7:] = [-1 * field for field in grofields[i][7:]]
+    return grofields
+# -------------------------------------------------------
 
 
 if __name__ == "__main__":
@@ -256,97 +403,100 @@ if __name__ == "__main__":
     pass
 
 
-
-
-
 ###### In the following are the analysis tools, remove this line when done####
 
 
-def calcR(posTS,ratesFile='rates.dat', crossFile='crossings.dat', debug=False):
-     """ Calculates the R component of the rate constants with an iterative approach
-     described by Juraszek et al. 2013
- 
-     Args:
-         posTS (int): position of the Transition State along the path X-axis 
-         ratesFile (string, optional): path to the file containing the probabilities of 
-             crossing windows 
-         crossFile (string, optional): path to the file containing information on the 
-             crossing events
-         debug (bool, optional): activate/deactivate the debug option
- 
-     Returns:
-         R (float): final approximated value of R, if debug option is activated, returns
-             vector with the value at each iteration
-     """
-     #NOTE FC: This implementation HEAVILY relies on files as formatted by Giorgio's script
-     #it should be adequately adapted if we decide to output that information in a different
-     #format   
+def calcR(posTS, ratesFile='rates.dat', crossFile='crossings.dat', debug=False):
+    """ Calculates the R component of the rate constants with an iterative approach
+    described by Juraszek et al. 2013
 
-     data=readFile(ratesFile)
-     lambdas,pmm,pmp,ppm,ppp=[],[],[],[],[]
-     numWindows=len(data)
-    
-     for line in data:
-         if len(line)>23: off=1
-         else: off=0
-         lambdas.append(float(line[2]))    
-         pmm.append(float(line[11+off]))
-         pmp.append(float(line[12+off]))
-         ppm.append(float(line[13+off]))
-         ppp.append(float(line[14+off]))
-        
-     cross=readFile(crossFile)
-     vel,we,pc,nc,ends=[],[],[],[],[]
-    
-     for line in cross:
-         vel.append(float(line[1]))
-         we.append(int(line[4]))
-         pc.append(int(line[2]))
-         nc.append(int(line[3]))
-         ends.append(line[5])
-    
-     ends=np.asarray(ends)
-     Rtst=0.5*np.sum(we)/np.sum([w/v for w,v in zip(we,vel)])
- 
-     pcw=np.sum([p*w for p,w in zip(pc,we)])
-     ncw=np.sum([n*w for n,w in zip(nc,we)])
-   
-     pcw_ends=np.sum(np.ma.masked_where(ends == '-', we))
-     ncw_ends=np.sum(np.ma.masked_where(ends == '+', we))
-    
-     p0p=pcw_ends*1.0/pcw
-     p0n=ncw_ends*1.0/ncw
-    
-     diffL=99999
-     lambda0=0
-     for i in range(len(lambdas)):
-         if np.abs(posTS-lambdas[i])<diffL:
-             diffL=np.abs(posTS-lambdas[i])
-             lambda0=i
-           
-     A=[1,ppm[lambda0+1]]
-     Ab=[1,pmp[lambda0-1]] 
-     R=[]
-    
-     for i in range(2,numWindows):
-         m=i-2
-         if lambda0+m+1> len(ppm)-1 or lambda0-m-1<0: break 
-         AiNom = pmm[lambda0+m]*ppm[lambda0+m+1]*A[m]*A[m+1]
-         AiDen = (pmp[lambda0+m]*pmm[lambda0+m+1]+pmm[lambda0+m]*ppm[lambda0+m+1])\
-                 *A[m]-pmp[lambda0+m]*pmm[lambda0+m+1]*A[m+1]
-         if AiDen==0: break    
-         A.append(AiNom/AiDen)
-         
-         AbiNom = ppp[lambda0-m]*pmp[lambda0-m-1]*Ab[m]*Ab[m+1]
-         AbiDen = (ppm[lambda0-m]*ppp[lambda0-m-1]+ppp[lambda0-m]*pmp[lambda0-m-1])\
-                 *Ab[m]-ppm[lambda0-m]*ppp[lambda0-m-1]*Ab[m+1]
-         Ab.append(AbiNom/AbiDen)
- 
-     for m in range(0,len(A)):
-         RiNom = 0.5*Rtst*(p0n*ppm[lambda0]+p0p*pmp[lambda0])*A[m]*Ab[m]
-         RiDen = ppm[lambda0]*A[m]+pmp[lambda0]*Ab[m]+(1-ppm[lambda0]-pmp[lambda0])*A[m]*Ab[m]
-         R.append(RiNom/RiDen)
+    Args:
+        posTS (int): position of the Transition State along the path X-axis
+        ratesFile (string, optional): path to the file containing the probabilities of
+            crossing windows
+        crossFile (string, optional): path to the file containing information on the
+            crossing events
+        debug (bool, optional): activate/deactivate the debug option
 
-     if debug=True: return R
-     return R[-1]
+    Returns:
+        R (float): final approximated value of R, if debug option is activated, returns
+            vector with the value at each iteration
+    """
+    # NOTE FC: This implementation HEAVILY relies on files as formatted by Giorgio's script
+    # it should be adequately adapted if we decide to output that information in a different
+    # format
 
+    data = readFile(ratesFile)
+    lambdas, pmm, pmp, ppm, ppp = [], [], [], [], []
+    numWindows = len(data)
+
+    for line in data:
+        if len(line) > 23:
+            off = 1
+        else:
+            off = 0
+        lambdas.append(float(line[2]))
+        pmm.append(float(line[11 + off]))
+        pmp.append(float(line[12 + off]))
+        ppm.append(float(line[13 + off]))
+        ppp.append(float(line[14 + off]))
+
+    cross = readFile(crossFile)
+    vel, we, pc, nc, ends = [], [], [], [], []
+
+    for line in cross:
+        vel.append(float(line[1]))
+        we.append(int(line[4]))
+        pc.append(int(line[2]))
+        nc.append(int(line[3]))
+        ends.append(line[5])
+
+    ends = np.asarray(ends)
+    Rtst = 0.5 * np.sum(we) / np.sum([w / v for w, v in zip(we, vel)])
+
+    pcw = np.sum([p * w for p, w in zip(pc, we)])
+    ncw = np.sum([n * w for n, w in zip(nc, we)])
+
+    pcw_ends = np.sum(np.ma.masked_where(ends == '-', we))
+    ncw_ends = np.sum(np.ma.masked_where(ends == '+', we))
+
+    p0p = pcw_ends * 1.0 / pcw
+    p0n = ncw_ends * 1.0 / ncw
+
+    diffL = 99999
+    lambda0 = 0
+    for i in range(len(lambdas)):
+        if np.abs(posTS - lambdas[i]) < diffL:
+            diffL = np.abs(posTS - lambdas[i])
+            lambda0 = i
+
+    A = [1, ppm[lambda0 + 1]]
+    Ab = [1, pmp[lambda0 - 1]]
+    R = []
+
+    for i in range(2, numWindows):
+        m = i - 2
+        if lambda0 + m + 1 > len(ppm) - 1 or lambda0 - m - 1 < 0:
+            break
+        AiNom = pmm[lambda0 + m] * ppm[lambda0 + m + 1] * A[m] * A[m + 1]
+        AiDen = (pmp[lambda0 + m] * pmm[lambda0 + m + 1] + pmm[lambda0 + m] * ppm[lambda0 + m + 1])\
+            * A[m] - pmp[lambda0 + m] * pmm[lambda0 + m + 1] * A[m + 1]
+        if AiDen == 0:
+            break
+        A.append(AiNom / AiDen)
+
+        AbiNom = ppp[lambda0 - m] * pmp[lambda0 - m - 1] * Ab[m] * Ab[m + 1]
+        AbiDen = (ppm[lambda0 - m] * ppp[lambda0 - m - 1] + ppp[lambda0 - m] * pmp[lambda0 - m - 1])\
+            * Ab[m] - ppm[lambda0 - m] * ppp[lambda0 - m - 1] * Ab[m + 1]
+        Ab.append(AbiNom / AbiDen)
+
+    for m in range(0, len(A)):
+        RiNom = 0.5 * Rtst * \
+            (p0n * ppm[lambda0] + p0p * pmp[lambda0]) * A[m] * Ab[m]
+        RiDen = ppm[lambda0] * A[m] + pmp[lambda0] * Ab[m] + \
+            (1 - ppm[lambda0] - pmp[lambda0]) * A[m] * Ab[m]
+        R.append(RiNom / RiDen)
+
+    if debug == True:
+        return R
+    return R[-1]

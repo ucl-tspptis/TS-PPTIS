@@ -20,11 +20,11 @@ from __future__ import division
 import sys
 import os
 import shutil # for removing directory tree
-import subprocess as sub
 import numpy as np
 import matplotlib.pyplot as plt
 import mdtraj as md
 from tools import *
+
 
 class tsSetup:
     """ Standard TS-PPTIS setup class. """
@@ -55,7 +55,7 @@ class tsSetup:
         else:
             sys.exit('Error : invalid gmx path ' + gmx + '\n' +
                      'Make sure to have a working version of gromacs 5.X installed!')
-        
+
 	"""Check and load trajectory data."""
         try:
             self.top = top
@@ -90,6 +90,14 @@ class tsSetup:
         else:
             self.ndx = ''
             print 'nxd file:\t\t\tnot found'
+
+        """Check mdp file."""
+        if os.path.isfile(mdp):
+            self.mdp = mdp
+            print "mdp file:\t\t\tOK"
+        else:
+            self.mdp = ''
+            print 'mdp file:\t\t\tnot found'
 
         """Check for par file, if not foung generate from COLVAR"""
         if os.path.isfile(par):
@@ -159,6 +167,9 @@ class tsSetup:
 
         if path[-1] != '/': path+= '/'
 
+        # Gromacs log file. Passed to runGmx
+        gmxLog = path+'gmx.log'
+
         # Determine whether the folder is a window by the presence of window.cfg
         if os.path.isfile(path+'window.cfg'):
             print sectionDelimiter("SETUP RUN")
@@ -179,6 +190,12 @@ class tsSetup:
         config = parseConfig(path+'window.cfg')
         print 'Interfaces:\t\t\t', config['interfaces']
 
+        # Delete everything in the temp/ subdirectory
+        try:
+            shutil.rmtree(path+'temp/')
+            os.makedirs(path+'temp/')
+        except:
+            pass
 
         if not continuation:
             # Get number of frames of the initial trajectory.
@@ -186,7 +203,10 @@ class tsSetup:
             print "Path length:\t\t\t", pathLength
 
             # Write first line of tps_acc.log. Using same structure as previous implementation
-            tpsAccHandle.write(('0     0000       -          initial    1 '
+            # The if avoids situations where the run is set up twice without running and
+            # the file ends up having two lines about the initial traj.
+            if tpsAccLines == 0:
+                tpsAccHandle.write(('0     0000       -          initial    1 '
                                 '{:>6} 1.0000   A  B  1   0.00       0     -      1 1 1 1'
                                 '\n').format(pathLength))
             # Define shooting point and dump gro file
@@ -196,6 +216,56 @@ class tsSetup:
             print 'Shooting frame LPF:\t\t', point[2]
             extractFrame(point[1], self.traj, self.gro, self.colvar, path+'temp/frame.gro')
 
+
+            print '\nInitialising FW replica velocities...\t\t',
+
+            # Generate tpr for velocity generation
+            cmd = '%s grompp -c %s -f %s -p %s -maxwarn 1 -o %s -po %s' % (
+                        self.gmx, path+'temp/frame.gro', '../testfiles/invert.mdp',
+                        self.top, path+'temp/genvel.tpr', path+'temp/mdout.mdp')
+
+            runGmx(cmd, gmxLog, 'Generating tpr for velocity generation')
+
+            cmd = '%s mdrun -s %s -deffnm %s' % (
+                        self.gmx, path+'temp/genvel.tpr', path+'temp/genvel')
+
+            runGmx(cmd, gmxLog, 'Running 1 step')
+
+            print 'Done'
+
+            # Invert the velocities
+            print 'Inverting velocities for the BW replica...\t',
+
+            with open(path+'temp/genvel_inverted.gro','w') as handle:
+                handle.write(
+                    formatGro(
+                        invertGro(
+                            parseGro(path+'temp/genvel.gro'
+                ))))
+
+            print 'Done'
+
+            # Generating TPR files for FW and BW replicas
+
+            print 'Generating TPR files for FW and BW replicas...\t',
+
+            cmd = '%s grompp -c %s -f %s -p %s -maxwarn 1 -o %s -po %s' % (
+                        self.gmx, path+'temp/genvel.gro', self.mdp,
+                        self.top, path+'temp/fw.tpr', path+'temp/mdout.mdp')
+
+            runGmx(cmd, gmxLog, 'Generating TPR file for FW replica')
+
+            cmd = '%s grompp -c %s -f %s -p %s -maxwarn 1 -o %s -po %s' % (
+                        self.gmx, path+'temp/genvel_inverted.gro', self.mdp,
+                        self.top, path+'temp/bw.tpr', path+'temp/mdout.mdp')
+
+            runGmx(cmd, gmxLog, 'Generating TPR file for BW replica')
+
+            print 'Done'
+
+            # Moving the TPR file in the run/ subdir
+            os.rename(path+'temp/fw.tpr',path+'run/fw.tpr')
+            os.rename(path+'temp/bw.tpr',path+'run/bw.tpr')
 
             # TODO:
             # WHATEVER HAPPENS IF IT IS THE FIRST RUN
@@ -240,7 +310,7 @@ class tsAnalysis:
 	self.beta=1/2.479
 
      
-    def getRates(fes,Astate=0,Bstate=-1,Acorr=0,Bcorr=0,indexTS=None,error=None,ratesFile='rates.dat',crossFile='crossings.dat',printFile=False)
+    def getRates(fes,Astate=0,Bstate=-1,Acorr=0,Bcorr=0,indexTS=None,error=None,ratesFile='rates.dat',crossFile='crossings.dat',printFile=False):
         
         """Reads the free energy surface FES, TS-PPTIS crossing probabilities 
         and ouputs, calculate the rate constants and print them to screen and/or to file. 
@@ -275,11 +345,11 @@ class tsAnalysis:
         #format 
 
 	As=Astate
-	if Bstate=-1: Bs=len(fes)
+	if Bstate == -1: Bs=len(fes)
 	else: Bs=Bstate
 
 	if indexTS==None or indexTS>np.max(fes[0]) or indexTS<np.min(fes[0]):
-        	iTS=np.argmax([y for x,y in fes])
+		iTS=np.argmax([y for x,y in fes])
         else:
 	   iTS=indexTS
         #TS=np.argmax(val[:int(len(val)/4)]) 
@@ -344,7 +414,7 @@ def testAll():
                  '../testfiles/windows.dat',
                  '../testfiles/traj.par',
                  '../testfiles/md.mdp',
-                 gmx='gmx')
+                 gmx='/usr/bin/gmx')
 
     # Test extractFrame
 #    print extractFrame([0,1.2],
@@ -354,7 +424,7 @@ def testAll():
 #            outFile='../testfiles/out.pdb',trajStride=10,colvarStride=1)
 
     # Test initialising a window
-    ts.initWindow('../testfiles/pptis10',[0.5,1,2], overwrite=True)
+#    ts.initWindow('../testfiles/pptis10',[0.5,1,2], overwrite=True)
 
     ts.setUpTPS('../testfiles/pptis10')
 
