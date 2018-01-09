@@ -30,7 +30,7 @@ class tsSetup:
     """ Standard TS-PPTIS setup class. """
 
     def __init__(self, top, gro, traj, colvar, windows, par, mdp, ndx='', gmx='$GMX'):
-        """Initialise TS-PPTIS.
+        """Initialise TS-PPTIS setup.
         Args:
                 top (string): path to topology file .top
                 gro (string): path to structure file .gro
@@ -213,6 +213,125 @@ class tsSetup:
 
         tpsAccHandle.close()
 
+class tsAnalysis:
+    """ TS-PPTIS analysis class. 
+
+    It allows to calculate windows crossing probabilities and extract rates 
+    from a set of gromacs simulations.  
+    """
+
+    def __init__(self, units='kJ/mol'):
+        """Initialise the analysis.
+        
+        Args:
+            
+            ...
+
+            units (string, optional): energy units of the input free energy
+
+        """
+       
+        #FC: I guess here we will load anything that's needed to calculate 
+        #rates etc... (e.g. trajectories)
+
+        if units not in ['kJ/mol','kcal/mol','kT']: 
+		print 'Warning:  unrecognised energy units, assuming kJ/mol'
+        
+	self.beta=1/2.479
+
+     
+    def getRates(fes,Astate=0,Bstate=-1,Acorr=0,Bcorr=0,indexTS=None,error=None,ratesFile='rates.dat',crossFile='crossings.dat',printFile=False)
+        
+        """Reads the free energy surface FES, TS-PPTIS crossing probabilities 
+        and ouputs, calculate the rate constants and print them to screen and/or to file. 
+           
+        Args:
+            
+            fes (list (floats)): list containing the X and Y values of the calculated
+                free energy
+            ##We need to decide which format we want... for now list
+            Astate (int, optional): index of the A state along the FES, if none provided
+                assume first point
+            Bstate (int, optional): index of the B state along the FES, if none provided
+                assume last point
+            Acorr (float, optional): free energy correction to the A state 
+                (e.g. from external potentials) 
+            Bstate (int, optional): free energy correction to the B state 
+                (e.g. from external potentials)
+            indexTS (int, optional): index of the TS in the FES vector provided,
+                if none provided automatically look for the highest point in the FES
+            error (float, optional): free energy error to calculate the rates range,
+                if none provided automatically assume 1 kT
+            ratesFile (string, optional): path to the file containing the probabilities of 
+             crossing windows 
+            crossFile (string, optional): path to the file containing information on the 
+             crossing events
+            printFile (bool, optional): activate/deactivate printing to file
+
+        """
+
+        #NOTE FC: This implementation HEAVILY relies on files as formatted by Giorgio's script
+        #it should be adequately adapted if we decide to output that information in a different
+        #format 
+
+	As=Astate
+	if Bstate=-1: Bs=len(fes)
+	else: Bs=Bstate
+
+	if indexTS==None or indexTS>np.max(fes[0]) or indexTS<np.min(fes[0]):
+        	iTS=np.argmax([y for x,y in fes])
+        else:
+	   iTS=indexTS
+        #TS=np.argmax(val[:int(len(val)/4)]) 
+
+        if error==None: error=1/self.beta
+        
+        offFES=[f-fes[1][TS] for f in fes[1]]
+ 
+        norm=0
+        for i in range(As,iTS):
+            norm+=0.5*(np.exp(-beta*offFES[i+1])+exp(-beta*offFES[i]))*(fes[1][i+1]-fes[1][i])
+        PA=np.exp(-beta*(offFES[iTS]+Acorr))/norm
+
+        PAlow=np.exp(-beta*(offFES[TS]+Acorr-error))/norm
+        PAupp=np.exp(-beta*(offFES[TS]+Acorr+error))/norm
+
+        norm=0
+        for i in range(iTS,Bs-1):
+            norm+=0.5*(np.exp(-beta*offFES[i+1])+exp(-beta*offFES[i]))*(fes[1][i+1]-fes[1][i])
+        PB=np.exp(-beta*(offFES[iTS]+Bcorr))/norm  
+
+        PBlow=np.exp(-beta*(offFES[TS]+Bcorr-error))/norm
+        PBupp=np.exp(-beta*(offFES[TS]+Bcorr+error))/norm
+                     
+        R=calcR(fes[0][iTS],ratesFile=ratesFile,crossFile=crossFile)
+
+        kAB=PA*R*1e12
+        kABlow=PAlow*R*1e12
+        kABupp=PAupp*R*1e12
+
+        kBA=PB*R*1e12
+        kBAlow=PBlow*R*1e12
+        kBAupp=PBupp*R*1e12
+
+        ##FIX ALL THIS PRINTING
+        ##Add also the times tau...
+        if printFile==True:
+            f=open('RatesOuptut.dat','w')
+	    f.write("Rates in s^-1")
+	    f.write("%.3e" % kAB, "%.3e" % kBA) 
+	    f.write("\nRates low")
+	    f.write("%.3e" % kABlow, "%.3e" % kBAlow)
+	    f.write("\nRates upp")
+	    f.write("%.3e" % kABupp, "%.3e" % kBAupp) 
+            f.close()
+  
+        print "\nRates in s^-1"
+        print "%.3e" % kAB, "%.3e" % kBA 
+        print "\nRates low"
+        print "%.3e" % kABlow, "%.3e" % kBAlow
+        print "\nRates upp"
+        print "%.3e" % kABupp, "%.3e" % kBAupp 
 
 def testAll():
     """ Runs a standard set of commands to test the correct functioning of TS-PPTIS. """

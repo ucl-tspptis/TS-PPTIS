@@ -255,3 +255,98 @@ if __name__ == "__main__":
 
     pass
 
+
+
+
+
+###### In the following are the analysis tools, remove this line when done####
+
+
+def calcR(posTS,ratesFile='rates.dat', crossFile='crossings.dat', debug=False):
+     """ Calculates the R component of the rate constants with an iterative approach
+     described by Juraszek et al. 2013
+ 
+     Args:
+         posTS (int): position of the Transition State along the path X-axis 
+         ratesFile (string, optional): path to the file containing the probabilities of 
+             crossing windows 
+         crossFile (string, optional): path to the file containing information on the 
+             crossing events
+         debug (bool, optional): activate/deactivate the debug option
+ 
+     Returns:
+         R (float): final approximated value of R, if debug option is activated, returns
+             vector with the value at each iteration
+     """
+     #NOTE FC: This implementation HEAVILY relies on files as formatted by Giorgio's script
+     #it should be adequately adapted if we decide to output that information in a different
+     #format   
+
+     data=readFile(ratesFile)
+     lambdas,pmm,pmp,ppm,ppp=[],[],[],[],[]
+     numWindows=len(data)
+    
+     for line in data:
+         if len(line)>23: off=1
+         else: off=0
+         lambdas.append(float(line[2]))    
+         pmm.append(float(line[11+off]))
+         pmp.append(float(line[12+off]))
+         ppm.append(float(line[13+off]))
+         ppp.append(float(line[14+off]))
+        
+     cross=readFile(crossFile)
+     vel,we,pc,nc,ends=[],[],[],[],[]
+    
+     for line in cross:
+         vel.append(float(line[1]))
+         we.append(int(line[4]))
+         pc.append(int(line[2]))
+         nc.append(int(line[3]))
+         ends.append(line[5])
+    
+     ends=np.asarray(ends)
+     Rtst=0.5*np.sum(we)/np.sum([w/v for w,v in zip(we,vel)])
+ 
+     pcw=np.sum([p*w for p,w in zip(pc,we)])
+     ncw=np.sum([n*w for n,w in zip(nc,we)])
+   
+     pcw_ends=np.sum(np.ma.masked_where(ends == '-', we))
+     ncw_ends=np.sum(np.ma.masked_where(ends == '+', we))
+    
+     p0p=pcw_ends*1.0/pcw
+     p0n=ncw_ends*1.0/ncw
+    
+     diffL=99999
+     lambda0=0
+     for i in range(len(lambdas)):
+         if np.abs(posTS-lambdas[i])<diffL:
+             diffL=np.abs(posTS-lambdas[i])
+             lambda0=i
+           
+     A=[1,ppm[lambda0+1]]
+     Ab=[1,pmp[lambda0-1]] 
+     R=[]
+    
+     for i in range(2,numWindows):
+         m=i-2
+         if lambda0+m+1> len(ppm)-1 or lambda0-m-1<0: break 
+         AiNom = pmm[lambda0+m]*ppm[lambda0+m+1]*A[m]*A[m+1]
+         AiDen = (pmp[lambda0+m]*pmm[lambda0+m+1]+pmm[lambda0+m]*ppm[lambda0+m+1])\
+                 *A[m]-pmp[lambda0+m]*pmm[lambda0+m+1]*A[m+1]
+         if AiDen==0: break    
+         A.append(AiNom/AiDen)
+         
+         AbiNom = ppp[lambda0-m]*pmp[lambda0-m-1]*Ab[m]*Ab[m+1]
+         AbiDen = (ppm[lambda0-m]*ppp[lambda0-m-1]+ppp[lambda0-m]*pmp[lambda0-m-1])\
+                 *Ab[m]-ppm[lambda0-m]*ppp[lambda0-m-1]*Ab[m+1]
+         Ab.append(AbiNom/AbiDen)
+ 
+     for m in range(0,len(A)):
+         RiNom = 0.5*Rtst*(p0n*ppm[lambda0]+p0p*pmp[lambda0])*A[m]*Ab[m]
+         RiDen = ppm[lambda0]*A[m]+pmp[lambda0]*Ab[m]+(1-ppm[lambda0]-pmp[lambda0])*A[m]*Ab[m]
+         R.append(RiNom/RiDen)
+
+     if debug=True: return R
+     return R[-1]
+
