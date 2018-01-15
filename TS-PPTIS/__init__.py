@@ -160,9 +160,7 @@ class tsSetup:
         # A DIFFERENT WORKING DIRECTORY ***
         # 2. Replace placeholders with window limits
 
-        shutil.copy('./plumed.dat', path)
-
-        with open(path+'plumed.dat','r') as handle:
+        with open('plumed.dat','r') as handle:
             committorText = handle.read()
 
         committorText = committorText.replace('__LL__',str(window[0])).replace('__UL__',str(window[2]))
@@ -179,6 +177,15 @@ class tsSetup:
             initText = '# %s\ninterfaces = %s\n' % (
                 timestamp(), ':'.join(map(str, window)))
             handle.write(initText)
+
+
+	# Write first line of tps_acc.log. Using same structure as previous implementation
+	# The if avoids situations where the run is set up twice without running and
+	# the file ends up having two lines about the initial traj.
+        with open(path + 'tps_acc.log', 'w') as handle:
+		handle.write(('0     0000       -          initial    1 ' \
+				  '{:>6} 1.0000   A  B  1   0.00       0     -      1 1 1 1' \
+				  '\n').format(len(self.trajData)))
 
     def setUpTPS(self, path):
         """Setup a TPS run
@@ -210,12 +217,12 @@ class tsSetup:
         # Open tps_acc.log, which holds info about accepted trajectories
         tpsAccHandle = open(path + 'tps_acc.log', 'a+')
         # Number of accepted trajectories
-        tpsAccLines = sum([1 for line in tpsAccHandle])
+        runNumber = len(tpsAccHandle.readlines())
 
-        if tpsAccLines > 1:
+        if runNumber > 1:
             continuation = True  # The first is the initial so, > 1 is continuation
 
-        print 'First run:\t\t\t', not continuation
+	print 'First run:\t\t\t', not continuation
 
         config = parseConfig(path + 'window.cfg')
         print 'Interfaces:\t\t\t', config['interfaces']
@@ -227,18 +234,22 @@ class tsSetup:
         except:
             pass
 
-        if not continuation:
+	print 'Source trajectory data:\t\t',path+'data/%05d' % (runNumber-1)
+
+	# load previous path:
+	if os.path.isfile(path+'data/%05d.xtc' % (runNumber-1)):
+		prevTrajExt = '.xtc'
+	elif os.path.isfile(path+'data/%05d.trr' % (runNumber-1)):
+		prevTrajExt = '.trr'
+	else:
+		sys.exit('Trajectory file not found:', path+'data/%05d%s' % (runNumber-1, prevTrajExt))
+
+	prevTraj = md.load(path+'data/%05d%s' % (runNumber-1, prevTrajExt), top=self.gro)
+	if not continuation:
             # Get number of frames of the initial trajectory.
             pathLength = len(self.trajData)
             print "Path length:\t\t\t", pathLength
 
-            # Write first line of tps_acc.log. Using same structure as previous implementation
-            # The if avoids situations where the run is set up twice without running and
-            # the file ends up having two lines about the initial traj.
-            if tpsAccLines == 0:
-                tpsAccHandle.write(('0     0000       -          initial    1 '
-                                    '{:>6} 1.0000   A  B  1   0.00       0     -      1 1 1 1'
-                                    '\n').format(pathLength))
             # Define shooting point and dump gro file
             point = shootingPoint(self.par, config['interfaces'])
             print 'Shooting point:\t\t\t', point[1]
@@ -334,7 +345,6 @@ class tsSetup:
         if path[-1] != '/':
             path += '/'
 
-        print 'Finalizing:\t\t',path
 
         # Determine whether the folder is a window by the presence of window.cfg
         if os.path.isfile(path + 'window.cfg'):
@@ -342,38 +352,105 @@ class tsSetup:
         else:
             sys.exit('Error: the folder does not seem to be a TS-PPTIS window')
 
+        print 'Finalizing:\t\t',path
+
         config = parseConfig(path+'window.cfg')
 
         window = map(float,config['interfaces'].split(':'))
 
+        # Get run number by finding highest numbered trajectory in data/ dir (+1):
+        runNumber = np.max([int(f.split('.')[0]) for f in os.listdir(path+'data') if f.endswith('.cv')])+1
+
+        print 'Run number:\t\t\t',runNumber
+
         print 'Interfaces:\t\t\t',config['interfaces']
 
-        
+        # Inverting BW replica and joining trajectories...
+        # Follow the TSPPTIS 1 convention of getting frame 0 from the FW replica
+        replTraj = [md.load(path+'run/'+'bw.trr', top=self.gro)[:0:-1],
+                    md.load(path+'run/'+'fw.trr', top=self.gro)]# *** CHANGE WITH TRAJFILE NAME ***
+
+        md.join(replTraj).save(path+'run/'+'fulltraj.trr')
+
+        endPoint = []
+        jointColvar = []
         for repl in ('BW', 'FW'):
 
             # Load replica colvar
             replColvar = parseTxt(path+'run/COLVAR_'+repl)
 
-            print '%s Path length:\t\t\t%.2f ns' % (repl,replColvar[-1,0] / 1000)
+            print '%s Path length:\t\t\t%.2f ps' % (repl,replColvar[-1,0])
 
-            # map CV values to -1/1 depending on which side of the central interface they lie
-            replSide = map(int,np.sign(replColvar[:,1] - window[1]))
-            # iterate i,i+1 pairs of CV points to count transitions
-            crossCount = [0,0]
-            for i in range(len(replSide)-1):
-                seq = (replSide[i], replSide[i+1])
-                if seq == (-1,1): crossCount[1] += 1
-                if seq == (-1,1): crossCount[0] += 1
+            # Invert colvar if BW
+            if repl == 'BW':
+                replColvar = replColvar[:0:-1]
+                replColvar[:,0] = -replColvar[:,0]
+            jointColvar.append(replColvar)
 
-            print '%s crossings (+/-):\t\t%d, %d' % (repl,crossCount[0], crossCount[1])
+        jointColvar = np.concatenate([jointColvar[0], jointColvar[1]])
 
-            replEndPoint = 'A' if replColvar[-1][1] <= window[0] else 'B'
+        # map CV values to -1/1 depending on which side of the central interface they lie
+        jointSide = map(int,np.sign(jointColvar[:,1] - window[1]))
 
-            print '%s end point:\t\t\t%s' % (repl,replEndPoint)
+        # iterate i,i+1 pairs of CV points to count transitions
+        crossHist = [0]*( len(jointSide) - 1 )
+        for i in range(len(jointSide)-1):
+            seq = (jointSide[i], jointSide[i+1])
+            if seq == (-1,1):
+                crossHist[i] = 1
+            elif seq == (-1,1):
+                crossHist[i] = -1
+
+        crossCount = np.sum(crossHist == 1), np.sum(crossHist == -1)
+        endPoint = ['A' if jointSide[i] <= window[0] else 'B' for i in (0,-1)]
+
+        # Accept if crossings = 0
+        accepted = np.sum(crossCount) > 0
 
 
+        print '%s crossings (+/-):\t\t%d, %d' % (repl,crossCount[0], crossCount[1])
+
+
+        print 'Start/end side:\t\t\t%s -> %s' % (endPoint[0], endPoint[1])
+
+        print 'Accepted\t\t\t%s' % accepted
+
+
+        # Write tps.info in the run directory. Structure differs from TS-PPTIS 1
+        tpsInfo = '{:>10s} {:>8s} {:>10s} {:>8s} {:>8s}\n'.format('TIME','LPF','TIS CV','SIDE','CROSS')
+
+        for i in range(len(jointColvar)):
+            if i < len(crossHist):
+                cross = str(crossHist[i])
+            else: cross = ''
+
+            tpsInfo += '{:10.3f} {:8d} {:10.3f} {:8d} {:>8s}\n'.format(jointColvar[i,0],
+                                              jointColvar[i,0] >= 0,
+                                              jointColvar[i,1],
+                                              jointSide[i],
+                                              cross)
+        tpsInfo += '''
+# Run number:\t\t%d
+# Total crossings:\t%d
+# Net crossing:\t\t%d
+''' % (runNumber, np.sum(crossCount), crossCount[0]+crossCount[1])
+
+        with open(path+'run/tps.info','w') as handle:
+            handle.write(tpsInfo)
             # TO DO: reverse BW trajectory
 
+        # If accepted copy data to data/ directory:
+        if accepted:
+            # move traj
+            shutil.move(path+'run/fulltraj.trr', path+'data/%05d.trr' % runNumber)
+            # generate par
+            generatePar(jointColvar,path+'data/%05d.par' % runNumber,
+                        direction=(jointColvar[:,0] >= 0).astype(int) )
+
+            # write .cv file:
+            with open(path+'data/%05d.cv' % runNumber, 'w') as handle:
+                for line in jointColvar:
+                    handle.write('    '.join(map(str,line)) +'\n')
 
 class tsAnalysis:
     """ TS-PPTIS analysis class.
@@ -522,11 +599,11 @@ def testAll():
 #            outFile='../testfiles/out.pdb',trajStride=10,colvarStride=1)
 
     # Test initialising a window
-    # ts.initWindow('../testfiles/pptis10',[0.75,1,1.25], overwrite=True)
+    ts.initWindow('../testfiles/pptis20',[0.75,1,1.25], overwrite=True)
 
-    # ts.setUpTPS('../testfiles/pptis10')
+    ts.setUpTPS('../testfiles/pptis20')
 
-    ts.finalizeTPS('../testfiles/pptis10')
+    ts.finalizeTPS('../testfiles/pptis20')
 
 
 if __name__ == "__main__":

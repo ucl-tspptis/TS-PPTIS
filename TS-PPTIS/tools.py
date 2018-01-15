@@ -202,20 +202,22 @@ def extractFrame(cvValue, trajFile, topFile, colvarFile, outFile='out.pdb', traj
 
 
 def generatePar(colvarFile, parFile, direction=''):
-    """Generate and save a PAR file starting from a COLVAR file
+    """Generate and save a PAR file starting from a COLVAR file or COLVAR data
 
     Args:
-        colvarFile (string): COLVAR file name
+        colvarFile (string/iterable): COLVAR file name or nested list
         parFile (string): output PAR file name
         direction (list): list of directions for each frame.
             If not provided FW direction is assumed.
 
     """
-
-    colvar = parseTxt(colvarFile)
+    if type(colvarFile) == str:
+        colvar = parseTxt(colvarFile)
+    else:
+        colvar = colvarFile
 
     # If directions not provided assume FW direction
-    if not direction:
+    if len(direction) == 0:
         direction = [1] * len(colvar)
     elif len(direction) != len(colvar):
         sys.exit("COLVAR length and direction list do not have the same length")
@@ -223,8 +225,9 @@ def generatePar(colvarFile, parFile, direction=''):
     # Write PAR
     with open(parFile, 'w') as handle:
         for i in range(0, len(colvar)):
-            handle.write('    '.join(
-                map(str, np.append(colvar[i], direction[i]))) + '\n')
+            handle.write(
+                    '    '.join(
+                        map(str, colvar[i]) + [str(int(direction[i]))]) + '\n')
 
 
 def shootingPoint(parFile, interfaces):
