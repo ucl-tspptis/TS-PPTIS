@@ -151,7 +151,7 @@ def extractFrame(cvValue, trajFile, topFile, colvarFile, outFile='out.pdb', traj
 
     Args:
         cvValue (float/list/tuple): CV value or CV range
-        trajFile (string): trajectory file name
+        trajFile (string od mdtraj trajectory): trajectory file name or object
         topFile (string): topology for mdtraj.
         colvarFile (string): COLVAR file name
         outFile (string, optional): output file name
@@ -165,10 +165,11 @@ def extractFrame(cvValue, trajFile, topFile, colvarFile, outFile='out.pdb', traj
 
     """
 
-    # In theory traj is already loadd in trajData, am I right? So passing self we already
-    # have all the information... let's fix this if this is the case.
+    if type(trajFile) == str:
+        traj = md.load(trajFile, top=topFile)
+    else:
+        traj = trajFile
 
-    traj = md.load(trajFile, top=topFile)
     colvar = parseTxt(colvarFile)
 
     # Subsample trajectory or COLVAR depending on who has highest stride

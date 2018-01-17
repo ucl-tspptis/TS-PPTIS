@@ -182,10 +182,19 @@ class tsSetup:
 	# Write first line of tps_acc.log. Using same structure as previous implementation
 	# The if avoids situations where the run is set up twice without running and
 	# the file ends up having two lines about the initial traj.
+
+        # Update 17/01/18: structure differs.
         with open(path + 'tps_acc.log', 'w') as handle:
-		handle.write(('0     0000       -          initial    1 ' \
-				  '{:>6} 1.0000   A  B  1   0.00       0     -      1 1 1 1' \
-				  '\n').format(len(self.trajData)))
+# runNumber lenTraj startCV startSide startAB endAB +cross -cross |+cross|+|-cross| (+cross)-(-cross)
+                handle.write('{:10d} {:10d} {:10.3f} {:5d} {:>5s} {:>5s} {:5d} {:5d} {:5d} {:5d}\n'.format(
+                        0,
+                        len(self.trajData),
+                        0,
+                        0,
+                        'A', 'B',
+                        0, 0,
+                        0,0))
+
 
     def setUpTPS(self, path):
         """Setup a TPS run
@@ -234,93 +243,83 @@ class tsSetup:
         except:
             pass
 
-	print 'Source trajectory data:\t\t',path+'data/%05d' % (runNumber-1)
+
+        # ------------ RECOVER PREVIOUS TRAJECTORY ----------
+
+        prevRun = path+'data/%05d' % (runNumber-1)
+	print 'Source trajectory data:\t\t', prevRun
 
 	# load previous path:
-	if os.path.isfile(path+'data/%05d.xtc' % (runNumber-1)):
+	if os.path.isfile(prevRun + '.xtc'):
 		prevTrajExt = '.xtc'
-	elif os.path.isfile(path+'data/%05d.trr' % (runNumber-1)):
+	elif os.path.isfile(prevRun + '.trr'):
 		prevTrajExt = '.trr'
 	else:
-		sys.exit('Trajectory file not found:', path+'data/%05d%s' % (runNumber-1, prevTrajExt))
+                sys.exit('Trajectory file not found:', prevRun + ' [xtc/trr]')
 
-	prevTraj = md.load(path+'data/%05d%s' % (runNumber-1, prevTrajExt), top=self.gro)
-	if not continuation:
-            # Get number of frames of the initial trajectory.
-            pathLength = len(self.trajData)
-            print "Path length:\t\t\t", pathLength
+        prevTraj = md.load(prevRun + prevTrajExt, top=self.gro)
 
-            # Define shooting point and dump gro file
-            point = shootingPoint(self.par, config['interfaces'])
-            print 'Shooting point:\t\t\t', point[1]
-            print 'Shooting frame:\t\t\t', point[0]
-            print 'Shooting frame LPF:\t\t', point[2]
-            extractFrame(point[1], self.traj, self.gro,
-                         self.colvar, path + 'temp/frame.gro')
+        # Get number of frames of the initial trajectory.
+        pathLength = len(prevTraj)
+        print "Path length:\t\t\t", pathLength
 
-            print '\nInitialising FW replica velocities...\t\t',
+        # Define shooting point and dump gro file
+        point = shootingPoint(prevRun + '.par', config['interfaces'])
+        print 'Shooting point:\t\t\t', point[1]
+        print 'Shooting frame:\t\t\t', point[0]
+        print 'Shooting frame LPF:\t\t', point[2]
+        extractFrame(point[1], prevTraj, self.gro,
+                     prevRun + '.cv', path + 'temp/frame.gro')
 
-            # Generate tpr for velocity generation
-            cmd = '%s grompp -c %s -f %s -p %s -maxwarn 1 -o %s -po %s' % (
-                self.gmx, path + 'temp/frame.gro', './invert.mdp',
-                self.top, path + 'temp/genvel.tpr', path + 'temp/mdout.mdp')
+        print '\nInitialising FW replica velocities...\t\t',
 
-            runGmx(cmd, gmxLog, 'Generating tpr for velocity generation')
+        # Generate tpr for velocity generation
+        cmd = '%s grompp -c %s -f %s -p %s -maxwarn 1 -o %s -po %s' % (
+            self.gmx, path + 'temp/frame.gro', './invert.mdp',
+            self.top, path + 'temp/genvel.tpr', path + 'temp/mdout.mdp')
 
-            cmd = '%s mdrun -s %s -deffnm %s' % (
-                self.gmx, path + 'temp/genvel.tpr', path + 'temp/genvel')
+        runGmx(cmd, gmxLog, 'Generating tpr for velocity generation')
 
-            runGmx(cmd, gmxLog, 'Running 1 step')
+        cmd = '%s mdrun -s %s -deffnm %s' % (
+            self.gmx, path + 'temp/genvel.tpr', path + 'temp/genvel')
 
-            print 'Done'
+        runGmx(cmd, gmxLog, 'Running 1 step')
 
-            # Invert the velocities
-            print 'Inverting velocities for the BW replica...\t',
+        print 'Done'
 
-            with open(path + 'temp/genvel_inverted.gro', 'w') as handle:
-                handle.write(
-                    formatGro(
-                        invertGro(
-                            parseGro(path + 'temp/genvel.gro'
-                                     ))))
+        # Invert the velocities
+        print 'Inverting velocities for the BW replica...\t',
 
-            print 'Done'
+        with open(path + 'temp/genvel_inverted.gro', 'w') as handle:
+            handle.write(
+                formatGro(
+                    invertGro(
+                        parseGro(path + 'temp/genvel.gro'
+                                 ))))
 
-            # Generating TPR files for FW and BW replicas
+        print 'Done'
 
-            print 'Generating TPR files for FW and BW replicas...\t',
+        # Generating TPR files for FW and BW replicas
 
-            cmd = '%s grompp -c %s -f %s -p %s -maxwarn 1 -o %s -po %s' % (
-                self.gmx, path + 'temp/genvel.gro', self.mdp,
-                self.top, path + 'temp/fw.tpr', path + 'temp/mdout.mdp')
+        print 'Generating TPR files for FW and BW replicas...\t',
 
-            runGmx(cmd, gmxLog, 'Generating TPR file for FW replica')
+        cmd = '%s grompp -c %s -f %s -p %s -maxwarn 1 -o %s -po %s' % (
+            self.gmx, path + 'temp/genvel.gro', self.mdp,
+            self.top, path + 'temp/fw.tpr', path + 'temp/mdout.mdp')
 
-            cmd = '%s grompp -c %s -f %s -p %s -maxwarn 1 -o %s -po %s' % (
-                self.gmx, path + 'temp/genvel_inverted.gro', self.mdp,
-                self.top, path + 'temp/bw.tpr', path + 'temp/mdout.mdp')
+        runGmx(cmd, gmxLog, 'Generating TPR file for FW replica')
 
-            runGmx(cmd, gmxLog, 'Generating TPR file for BW replica')
+        cmd = '%s grompp -c %s -f %s -p %s -maxwarn 1 -o %s -po %s' % (
+            self.gmx, path + 'temp/genvel_inverted.gro', self.mdp,
+            self.top, path + 'temp/bw.tpr', path + 'temp/mdout.mdp')
 
-            print 'Done'
+        runGmx(cmd, gmxLog, 'Generating TPR file for BW replica')
 
-            # Moving the TPR file in the run/ subdir
-            os.rename(path + 'temp/fw.tpr', path + 'run/fw.tpr')
-            os.rename(path + 'temp/bw.tpr', path + 'run/bw.tpr')
+        print 'Done'
 
-            # TODO:
-            # WHATEVER HAPPENS IF IT IS THE FIRST RUN
-        else:
-            # TODO:
-            # WHATEVER HAPPENS IF IT IS NOT THE FIRST RUN
-            pass
-            # in both cases, roughly, **I believe**:
-            # determining previous path length, selecting random frame,
-            # determining the LPF of the selected frame (whether BW or FW, use PAR file)
-            # setting tmap (maximum duration of current run) with
-            # path_length/random(),
-            # extracting random frame, randomising velocities, generating a reversed TPR
-            # for the BW trajectory
+        # Moving the TPR file in the run/ subdir
+        os.rename(path + 'temp/fw.tpr', path + 'run/fw.tpr')
+        os.rename(path + 'temp/bw.tpr', path + 'run/bw.tpr')
 
         tpsAccHandle.close()
 
@@ -393,12 +392,12 @@ class tsSetup:
         jointSide = map(int,np.sign(jointColvar[:,1] - window[1]))
 
         # iterate i,i+1 pairs of CV points to count transitions
-        crossHist = [0]*( len(jointSide) - 1 )
+        crossHist = np.zeros([len(jointSide) - 1])
         for i in range(len(jointSide)-1):
             seq = (jointSide[i], jointSide[i+1])
             if seq == (-1,1):
                 crossHist[i] = 1
-            elif seq == (-1,1):
+            elif seq == (1,-1):
                 crossHist[i] = -1
 
         crossCount = np.sum(crossHist == 1), np.sum(crossHist == -1)
@@ -408,7 +407,7 @@ class tsSetup:
         accepted = np.sum(crossCount) > 0
 
 
-        print '%s crossings (+/-):\t\t%d, %d' % (repl,crossCount[0], crossCount[1])
+        print 'Crossings (+/-):\t\t%d, %d' % (crossCount[0], crossCount[1])
 
 
         print 'Start/end side:\t\t\t%s -> %s' % (endPoint[0], endPoint[1])
@@ -433,11 +432,11 @@ class tsSetup:
 # Run number:\t\t%d
 # Total crossings:\t%d
 # Net crossing:\t\t%d
-''' % (runNumber, np.sum(crossCount), crossCount[0]+crossCount[1])
+# Accept:\t\t%d
+''' % (runNumber, np.sum(crossCount), crossCount[0] - crossCount[1], int(accepted))
 
         with open(path+'run/tps.info','w') as handle:
             handle.write(tpsInfo)
-            # TO DO: reverse BW trajectory
 
         # If accepted copy data to data/ directory:
         if accepted:
@@ -451,6 +450,22 @@ class tsSetup:
             with open(path+'data/%05d.cv' % runNumber, 'w') as handle:
                 for line in jointColvar:
                     handle.write('    '.join(map(str,line)) +'\n')
+
+            # update tsp_acc.log
+#0     0000       -          initial    1    501 1.0000   A  B  1   0.00       0     -      1 1 1 1
+            startFrame = np.where(jointColvar == 0)[0][0]
+
+            with open(path+'tps_acc.log','a+') as handle:
+# runNumber lenTraj startCV startSide startAB endAB +cross -cross |+cross|+|-cross| (+cross)-(-cross)
+                handle.write('{:10d} {:10d} {:10.3f} {:5d} {:>5s} {:>5s} {:5d} {:5d} {:5d} {:5d}\n'.format(
+                        runNumber,
+                        len(jointColvar),
+                        jointColvar[startFrame][1],
+                        jointSide[startFrame],
+                        endPoint[0], endPoint[1],
+                        crossCount[0], crossCount[1],
+                        np.sum(crossCount), crossCount[0] - crossCount[1]))
+
 
 class tsAnalysis:
     """ TS-PPTIS analysis class.
@@ -591,19 +606,11 @@ def testAll():
                  '../testfiles/md.mdp',
                  gmx='/usr/bin/gmx')
 
-    # Test extractFrame
-#    print extractFrame([0,1.2],
-#            trajFile='../testfiles/traj_fixed_skipped.xtc',
-#            topFile='../testfiles/system.gro',
-#            colvarFile='../testfiles/COLVAR',
-#            outFile='../testfiles/out.pdb',trajStride=10,colvarStride=1)
+#    ts.initWindow('../testfiles/pptis10',[0.75,1,1.50], overwrite=True)
 
-    # Test initialising a window
-    ts.initWindow('../testfiles/pptis20',[0.75,1,1.25], overwrite=True)
+#    ts.setUpTPS('../testfiles/pptis10')
 
-    ts.setUpTPS('../testfiles/pptis20')
-
-    ts.finalizeTPS('../testfiles/pptis20')
+    ts.finalizeTPS('../testfiles/pptis10')
 
 
 if __name__ == "__main__":
