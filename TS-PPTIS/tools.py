@@ -305,6 +305,68 @@ In section: \t\t%s
 
     return proc.returncode
 
+
+def tpsAccEntry(logFile, runNumber, trajLen, startingPoint, startingSide, bwAB, fwAB, leftCross, rightCross, crossCount, netCross):
+    """ Add tps_acc.log/tps_rej.log entry for the combined BW+FW trjajectory.
+
+    Args:
+        logFile (string): file path
+        runNumber (int): progressive run number. Initial is 0
+        trajLen (float): trajectory length in ps
+        startingPoint (float): starting point in CV space
+        startingSide (int): whether the starting point is
+                            before/after the central interface (-1/1)
+        bwAB (string): which side the trajectory starts (A/B)
+        fwAB (string): which side the trajectory end (A/B)
+        leftCross (int): number of right to left crossings
+        rightCross (int): number of left to right crossings
+        crossCount (int): total number of crossings
+        netCross (int): net number of crossings (rightCross - leftCross)
+
+    """
+    with open(logFile, 'a+') as handle:
+        handle.write('{:10d} {:10d} {:10.3f} {:5d} {:>5s} {:>5s} {:5d} {:5d} {:5d} {:5d}\n'.format(
+            runNumber,
+            trajLen,
+            startingPoint,
+            startingSide,
+            bwAB, fwAB,
+            leftCross, rightCross,
+            crossCount, netCross))
+
+def parseTpsAcc(logFile):
+    """ Parse tps_acc.log/tps_rej.log file.
+
+    Args:
+        logFile (string): file path
+
+
+    Returns:
+        parsed (nested list): tps_acc.log elements for each line
+
+    """
+
+    with open(logFile,'r') as handle:
+        tpsAcc = handle.readlines()
+
+    slices = (( 0,10),(11,21),(22,32),
+              (33,38),(39,44),(45,50),
+              (51,56),(57,62),(63,68),
+              (69,74))
+    parsed = []
+
+    for entry in tpsAcc:
+        line = []
+
+        for s in slices:
+            try:
+                line.append(float(entry[s[0]:s[1]]))
+            except:
+                line.append(entry[s[0]:s[1]].replace(' ',''))
+
+        parsed.append(line)
+    return parsed
+
 # --------------- GRO PARSING AND INVERTING -------------
 
 
@@ -326,11 +388,11 @@ def parseGro(groFile, slices=None):
         """
 
     with open(groFile, 'r') as handle:
-        gro = handle.readlines()
+        gro=handle.readlines()
 
     # If none given, use standard gro file structure
     if slices == None:
-        slices = [[0, 5],
+        slices=[[0, 5],
                   [5, 10],
                   [10, 15],
                   [15, 20],
@@ -342,18 +404,18 @@ def parseGro(groFile, slices=None):
                   [60, 68]]
 
     # Copy verbatim the fist two line
-    grofields = gro[:2]
+    grofields=gro[:2]
 
     for line in gro[2:-1]:
-        linefields = []
+        linefields=[]
         for s in slices:
             # For every line and every field try converting to float.
             # If it fails convert to string
-            field = line[s[0]:s[1]]
+            field=line[s[0]:s[1]]
             try:
-                field = float(field)
+                field=float(field)
             except:
-                field = str(field).strip()
+                field=str(field).strip()
             linefields.append(field)
         grofields.append(linefields)
 
@@ -373,7 +435,7 @@ def formatGro(grofields):
 
         Uses standard GRO precision.
     """
-    text = ''.join(map(str, grofields[:2]))
+    text=''.join(map(str, grofields[:2]))
     for line in grofields[2:-1]:
         text += '%5d%-5s%5s%5d%8.3f%8.3f%8.3f%8.4f%8.4f%8.4f\n' % (
             line[0], line[1], line[2],
@@ -397,7 +459,7 @@ def invertGro(grofields):
     """
 
     for i in range(2, len(grofields) - 1):
-        grofields[i][7:] = [-1 * field for field in grofields[i][7:]]
+        grofields[i][7:]=[-1 * field for field in grofields[i][7:]]
     return grofields
 # -------------------------------------------------------
 
@@ -430,23 +492,23 @@ def calcR(posTS, ratesFile='rates.dat', crossFile='crossings.dat', debug=False):
     # it should be adequately adapted if we decide to output that information in a different
     # format
 
-    data = readFile(ratesFile)
-    lambdas, pmm, pmp, ppm, ppp = [], [], [], [], []
-    numWindows = len(data)
+    data=readFile(ratesFile)
+    lambdas, pmm, pmp, ppm, ppp=[], [], [], [], []
+    numWindows=len(data)
 
     for line in data:
         if len(line) > 23:
-            off = 1
+            off=1
         else:
-            off = 0
+            off=0
         lambdas.append(float(line[2]))
         pmm.append(float(line[11 + off]))
         pmp.append(float(line[12 + off]))
         ppm.append(float(line[13 + off]))
         ppp.append(float(line[14 + off]))
 
-    cross = readFile(crossFile)
-    vel, we, pc, nc, ends = [], [], [], [], []
+    cross=readFile(crossFile)
+    vel, we, pc, nc, ends=[], [], [], [], []
 
     for line in cross:
         vel.append(float(line[1]))
@@ -455,49 +517,49 @@ def calcR(posTS, ratesFile='rates.dat', crossFile='crossings.dat', debug=False):
         nc.append(int(line[3]))
         ends.append(line[5])
 
-    ends = np.asarray(ends)
-    Rtst = 0.5 * np.sum(we) / np.sum([w / v for w, v in zip(we, vel)])
+    ends=np.asarray(ends)
+    Rtst=0.5 * np.sum(we) / np.sum([w / v for w, v in zip(we, vel)])
 
-    pcw = np.sum([p * w for p, w in zip(pc, we)])
-    ncw = np.sum([n * w for n, w in zip(nc, we)])
+    pcw=np.sum([p * w for p, w in zip(pc, we)])
+    ncw=np.sum([n * w for n, w in zip(nc, we)])
 
-    pcw_ends = np.sum(np.ma.masked_where(ends == '-', we))
-    ncw_ends = np.sum(np.ma.masked_where(ends == '+', we))
+    pcw_ends=np.sum(np.ma.masked_where(ends == '-', we))
+    ncw_ends=np.sum(np.ma.masked_where(ends == '+', we))
 
-    p0p = pcw_ends * 1.0 / pcw
-    p0n = ncw_ends * 1.0 / ncw
+    p0p=pcw_ends * 1.0 / pcw
+    p0n=ncw_ends * 1.0 / ncw
 
-    diffL = 99999
-    lambda0 = 0
+    diffL=99999
+    lambda0=0
     for i in range(len(lambdas)):
         if np.abs(posTS - lambdas[i]) < diffL:
-            diffL = np.abs(posTS - lambdas[i])
-            lambda0 = i
+            diffL=np.abs(posTS - lambdas[i])
+            lambda0=i
 
-    A = [1, ppm[lambda0 + 1]]
-    Ab = [1, pmp[lambda0 - 1]]
-    R = []
+    A=[1, ppm[lambda0 + 1]]
+    Ab=[1, pmp[lambda0 - 1]]
+    R=[]
 
     for i in range(2, numWindows):
-        m = i - 2
+        m=i - 2
         if lambda0 + m + 1 > len(ppm) - 1 or lambda0 - m - 1 < 0:
             break
-        AiNom = pmm[lambda0 + m] * ppm[lambda0 + m + 1] * A[m] * A[m + 1]
-        AiDen = (pmp[lambda0 + m] * pmm[lambda0 + m + 1] + pmm[lambda0 + m] * ppm[lambda0 + m + 1])\
+        AiNom=pmm[lambda0 + m] * ppm[lambda0 + m + 1] * A[m] * A[m + 1]
+        AiDen=(pmp[lambda0 + m] * pmm[lambda0 + m + 1] + pmm[lambda0 + m] * ppm[lambda0 + m + 1])\
             * A[m] - pmp[lambda0 + m] * pmm[lambda0 + m + 1] * A[m + 1]
         if AiDen == 0:
             break
         A.append(AiNom / AiDen)
 
-        AbiNom = ppp[lambda0 - m] * pmp[lambda0 - m - 1] * Ab[m] * Ab[m + 1]
-        AbiDen = (ppm[lambda0 - m] * ppp[lambda0 - m - 1] + ppp[lambda0 - m] * pmp[lambda0 - m - 1])\
+        AbiNom=ppp[lambda0 - m] * pmp[lambda0 - m - 1] * Ab[m] * Ab[m + 1]
+        AbiDen=(ppm[lambda0 - m] * ppp[lambda0 - m - 1] + ppp[lambda0 - m] * pmp[lambda0 - m - 1])\
             * Ab[m] - ppm[lambda0 - m] * ppp[lambda0 - m - 1] * Ab[m + 1]
         Ab.append(AbiNom / AbiDen)
 
     for m in range(0, len(A)):
-        RiNom = 0.5 * Rtst * \
+        RiNom=0.5 * Rtst * \
             (p0n * ppm[lambda0] + p0p * pmp[lambda0]) * A[m] * Ab[m]
-        RiDen = ppm[lambda0] * A[m] + pmp[lambda0] * Ab[m] + \
+        RiDen=ppm[lambda0] * A[m] + pmp[lambda0] * Ab[m] + \
             (1 - ppm[lambda0] - pmp[lambda0]) * A[m] * Ab[m]
         R.append(RiNom / RiDen)
 
