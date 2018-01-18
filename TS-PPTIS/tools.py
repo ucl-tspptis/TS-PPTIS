@@ -542,19 +542,28 @@ def calcR(posTS, ratesFile='rates.dat', crossFile='crossings.dat', debug=False):
 
     for i in range(2, numWindows):
         m=i - 2
-        if lambda0 + m + 1 > len(ppm) - 1 or lambda0 - m - 1 < 0:
+        if lambda0 + m + 1 > len(ppm) - 1 and lambda0 - m - 1 < 0:
             break
+
         AiNom=pmm[lambda0 + m] * ppm[lambda0 + m + 1] * A[m] * A[m + 1]
         AiDen=(pmp[lambda0 + m] * pmm[lambda0 + m + 1] + pmm[lambda0 + m] * ppm[lambda0 + m + 1])\
             * A[m] - pmp[lambda0 + m] * pmm[lambda0 + m + 1] * A[m + 1]
         if AiDen == 0:
             break
-        A.append(AiNom / AiDen)
+        if lambda0+m+1 <= len(ppm)-1:
+            A.append(AiNom/AiDen)
+        else:
+            A.append(A[-1])
 
         AbiNom=ppp[lambda0 - m] * pmp[lambda0 - m - 1] * Ab[m] * Ab[m + 1]
         AbiDen=(ppm[lambda0 - m] * ppp[lambda0 - m - 1] + ppp[lambda0 - m] * pmp[lambda0 - m - 1])\
             * Ab[m] - ppm[lambda0 - m] * ppp[lambda0 - m - 1] * Ab[m + 1]
-        Ab.append(AbiNom / AbiDen)
+        if AbiDen == 0:
+            break
+        if lambda0-m-1 >= 0:
+            Ab.append(AbiNom/AbiDen)
+        else:
+            Ab.append(Ab[-1])
 
     for m in range(0, len(A)):
         RiNom=0.5 * Rtst * \
