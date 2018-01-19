@@ -262,7 +262,7 @@ def shootingPoint(colvarFile, interfaces):
     frame = np.where(colvar[:, 1] == findNearest(colvar[:, 1], point))[0][0]
 
     # return frame number, CV value, lpf
-    return frame, round(colvar[frame, 1], 3), int(colvar[frame,0]) >= 0
+    return frame, round(colvar[frame, 1], 3), int(colvar[frame,0] >= 0)
 
 
 def sectionDelimiter(title, size=80, char='-'):

@@ -79,21 +79,6 @@ class tsSetup:
 
         print sectionDelimiter("CREATING WINDOW")
 
-        """Check and load trajectory data."""
-        if os.path.isfile(traj):
-            self.traj = traj
-            self.trajData = md.load(traj, top=self.gro)
-        else:
-            sys.exit('Trajectory file not found: '+ traj)
-
-        """Check and load colvar file."""
-        if os.path.isfile(colvar):
-            self.colvar = colvar
-            print 'COLVAR file:\t\t\tOK'
-        else:
-            sys.exit('COLVAR file not found: ' + colvar)
-
-
         # Absolute path
         path = os.path.abspath(path)
 
@@ -113,6 +98,21 @@ class tsSetup:
             else:
                 sys.exit('Refusing to overwrite directory')
 
+
+        """Check and load trajectory data."""
+        if os.path.isfile(traj):
+            self.traj = traj
+            self.trajData = md.load(traj, top=self.gro)
+            print 'Trajectory_file:\t\tOK'
+        else:
+            sys.exit('Trajectory file not found: '+ traj)
+
+        """Check and load colvar file."""
+        if os.path.isfile(colvar):
+            self.colvar = colvar
+            print 'COLVAR file:\t\t\tOK'
+        else:
+            sys.exit('COLVAR file not found: ' + colvar)
         # Check length of interface list
         if len(window) != 3:
             sys.exit('Wrong number of elements as window interfaces')
@@ -150,43 +150,45 @@ class tsSetup:
             handle.write(committorText.replace('__COLVAR__', 'COLVAR_BW'))
 
 
-        # Determine TRR and COLVAR stride and timestep. WIll be written in window.cfg
-        # MAYBE USE DICTIONARY?
-        trrStride, timestep = None, None
+        # Determine XTC, TRR and COLVAR stride and timestep. WIll be written in window.cfg
+
+        config = {}
+        config['interfaces'] = ':'.join(map(str, window))
+
         with open(self.mdp,'r') as handle:
             for line in handle.readlines():
-                if 'nstxout' in line: trrStride = int(line.split()[2])
-                elif 'dt' in line: timestep = float(line.split()[2])
+                if 'nstxout-compressed' in line:
+                    config['xtc_stride'] = int(line.split()[2])
+                elif 'nstxout' in line:
+                    config['trr_stride'] = int(line.split()[2])
+                elif 'dt' in line:
+                    config['timestep']   = float(line.split()[2])
 
-        colvarStride = None
         with open(path+'run/plumed_bw.dat','r') as handle:
             for line in handle.readlines():
                 if 'print' in line.lower():
                     for arg in line.split():
                         if 'stride' in arg.lower():
-                            colvarStride = int(arg.split('=')[1])
+                            config['colvar_stride'] = int(arg.split('=')[1])
+
         # Complain if not determined
-        if trrStride == None:
-            sys.exit('Unique TRR stride not found in ' + self.mdp)
-        elif timestep == None:
+        if not 'xtc_stride' in config:
+            sys.exit('Unique XTC stride not found in ' + self.mdp)
+        elif not 'timestep' in config:
             sys.exit('Timestep not found in ' + self.mdp)
-        elif colvarStride == None:
+        elif not 'colvar_stride' in config:
             sys.exit('COLVAR stride not found in ' + path+'run/plumed_bw.dat')
 
-        print 'TRR stride:\t\t\t',trrStride
-        print 'COLVAR stride:\t\t\t', colvarStride
+        print 'TRR stride:\t\t\t',config['xtc_stride']
+        print 'COLVAR stride:\t\t\t', config['colvar_stride']
 
         # Initialize a config file. Can be useful for storing paths and
         # various configurations. See the config file in the old implementation
         with open(path + 'window.cfg', 'w') as handle:
             # write timestamp, interfaces, trrStride and colvarStride
-            initText = '''# %s
-interfaces\t= %s
-trr_stride\t= %d
-colvar_stride\t= %d
-timestep\t= %.3f
-''' % (timestamp(), ':'.join(map(str, window)), trrStride, colvarStride, timestep)
-
+            initText = '#' + timestamp() + '\n'
+            for key in config.keys():
+                initText += '{:20s} = {:20s}\n'.format(key, str(config[key]))
             handle.write(initText)
 
         # Update 17/01/18: structure differs.
@@ -194,15 +196,14 @@ timestep\t= %.3f
 
         # Hint at gromacs command for running the dynamics
 
-        print '\n\n *** Example gromacs command: ***\n'
+        print '\n *** Example gromacs commands for BW and FW replicas: ***\n'
 
         for r in ['bw','fw']:
-            print '%s mdrun -s %s.tpr -plumed %s.dat -deffnm %s' % (
+            print '%s mdrun -s %s.tpr -plumed %s.dat -deffnm %s ; ' % (
                     self.gmx,
                     pathTree['run'] + r,
                     pathTree['run'] + 'plumed_' + r,
                     pathTree['run'] + r)
-
 
     def setUpTPS(self, path):
         """Setup a TPS run
@@ -238,9 +239,9 @@ timestep\t= %.3f
 
         continuation = False
         # Open tps_acc.log, which holds info about accepted trajectories
-        tpsAccHandle = open(path + 'tps_acc.log', 'a+')
+        tpsAcc = parseTpsAcc(path+'tps_acc.log')
         # Number of accepted trajectories
-        runNumber = len(tpsAccHandle.readlines())
+        runNumber = len(tpsAcc)
 
         if runNumber > 1:
             continuation = True  # The first is the initial so, > 1 is continuation
@@ -288,7 +289,9 @@ timestep\t= %.3f
         print 'Shooting frame:\t\t\t', point[0]
         print 'Shooting frame LPF:\t\t', point[2]
         extractFrame(point[1], prevTraj, self.gro,
-                     prevRun + '.cv', pathTree['temp'] + 'frame.gro')
+                     prevRun + '.cv', pathTree['temp'] + 'frame.gro',
+                     trajStride=config['xtc_stride'],
+                     colvarStride=config['colvar_stride'])
 
         print '\nInitialising FW replica velocities...\t\t',
 
@@ -346,8 +349,6 @@ timestep\t= %.3f
         os.rename(pathTree['temp'] + 'fw.tpr', pathTree['run'] + 'fw.tpr')
         os.rename(pathTree['temp'] + 'bw.tpr', pathTree['run'] + 'bw.tpr')
 
-        tpsAccHandle.close()
-
 
     def finalizeTPS(self, path):
         """Setup finalize a TPS run
@@ -395,20 +396,19 @@ timestep\t= %.3f
 
         # Inverting BW replica and joining trajectories...
         # Follow the TSPPTIS 1 convention of getting frame 0 from the FW replica
-        replTraj = [md.load(pathTree['run'] + 'bw.trr', top=self.gro)[:0:-1],
-                    md.load(pathTree['run'] + 'fw.trr', top=self.gro)]  # *** CHANGE WITH TRAJFILE NAME ***
+        replTraj = [md.load(pathTree['run'] + 'bw.xtc', top=self.gro)[:0:-1],
+                    md.load(pathTree['run'] + 'fw.xtc', top=self.gro)]  # *** CHANGE WITH TRAJFILE NAME ***
 
-        md.join(replTraj).save(pathTree['run'] + 'fulltraj.trr')
 
         endPoint = []
         jointColvar = []
-        for repl in ('BW', 'FW'):
+        for i, repl in enumerate(('BW', 'FW')):
 
             # Load replica colvar
             replColvar = parseTxt(pathTree['run'] + 'COLVAR_' + repl)
 
-            print "Path length:\t\t\t%d (%.1f ps)" % (pathLength,
-                        pathLength*config['timestep']*config['trr_stride'])
+            print "%s path length:\t\t\t%d (%.1f ps)" % (repl,len(replTraj[i]),
+                        len(replTraj[i])*config['timestep']*config['trr_stride'])
 
             # Invert colvar if BW
             if repl == 'BW':
@@ -416,6 +416,9 @@ timestep\t= %.3f
                 replColvar[:, 0] = -replColvar[:, 0]
             jointColvar.append(replColvar)
 
+        replTraj = md.join(replTraj)
+        replTraj.save(pathTree['run'] + 'fulltraj.trr')
+        pathLength = len(replTraj)
         jointColvar = np.concatenate([jointColvar[0], jointColvar[1]])
 
         # map CV values to -1/1 depending on which side of the central interface they lie
@@ -446,7 +449,7 @@ timestep\t= %.3f
 
         for i in range(len(jointColvar)):
             if i < len(crossHist):
-                cross = str(crossHist[i])
+                cross = str(int(crossHist[i]))
             else:
                 cross = ''
 
@@ -464,10 +467,6 @@ timestep\t= %.3f
 # Accept:\t\t%d
 ''' % (timestamp(), runNumber, np.sum(crossCount), crossCount[0] - crossCount[1], int(accepted))
 
-        with open(pathTree['run'] + 'tps.info', 'w') as handle:
-            handle.write(tpsInfo)
-
-
         startFrame = np.where(jointColvar == 0)[0][0]
 
         # If accepted copy data to data/ directory:
@@ -476,9 +475,9 @@ timestep\t= %.3f
             shutil.move(pathTree['run'] + 'fulltraj.trr',
                     pathTree['data'] + '%05d.trr' % runNumber)
 
-            # move tps.info
-            shutil.move(pathTree['run'] + 'tps.info',
-                    pathTree['data'] + '%05d.trr' % runNumber)
+            # write trajectory info file
+            with open(pathTree['data'] + '%05d.info' % runNumber, 'w') as handle:
+                handle.write(tpsInfo)
 
             # write .cv file:
             with open(pathTree['data'] + '%05d.cv' % runNumber, 'w') as handle:
@@ -507,6 +506,10 @@ timestep\t= %.3f
                         endPoint[0], endPoint[1],
                         crossCount[0], crossCount[1],
                         np.sum(crossCount), crossCount[0] - crossCount[1])
+
+            # write trajectory info file
+            with open(pathTree['data'] + 'rej_%05d.info' % runNumber, 'w') as handle:
+                handle.write(tpsInfo)
 
 class tsAnalysis:
     """ TS-PPTIS analysis class.
@@ -641,15 +644,15 @@ def testAll():
                  '../testfiles/md.mdp',
                  gmx='/usr/bin/gmx')
 
-    ts.initWindow('../testfiles/pptis10',
-                  [0.85,1,1.25],
-                  '../testfiles/traj_fixed.xtc',
-                  '../testfiles/COLVAR',
-                  overwrite=True)
+    #ts.initWindow('../testfiles/pptis10',
+    #              [0.85,1,1.25],
+    #              '../testfiles/traj_fixed.xtc',
+    #              '../testfiles/COLVAR',
+    #              overwrite=True)
 
-    ts.setUpTPS('../testfiles/pptis10')
+    #ts.setUpTPS('../testfiles/pptis10')
 
-    #ts.finalizeTPS('../testfiles/pptis10')
+    ts.finalizeTPS('../testfiles/pptis10')
 
 
 if __name__ == "__main__":
