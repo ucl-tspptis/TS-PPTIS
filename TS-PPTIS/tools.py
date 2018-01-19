@@ -82,7 +82,10 @@ def parseConfig(config):
     for line in data.readlines():
         if line[0] != '#':
             entry = [word.strip() for word in line.split('=')]
-            configDict[entry[0]] = entry[1]
+            try:
+                configDict[entry[0]] = float(entry[1])
+            except:
+                configDict[entry[0]] = entry[1]
 
     data.close()
 
@@ -202,41 +205,44 @@ def extractFrame(cvValue, trajFile, topFile, colvarFile, outFile='out.pdb', traj
     return frames, framesCV
 
 
-def generatePar(colvarFile, parFile, direction=''):
-    """Generate and save a PAR file starting from a COLVAR file or COLVAR data
+# May not be useful since the LPF can be conveyed using negative time
+# for the BW replica in the colvar file.
 
-    Args:
-        colvarFile (string/iterable): COLVAR file name or nested list
-        parFile (string): output PAR file name
-        direction (list): list of directions for each frame.
-            If not provided FW direction is assumed.
+#def generatePar(colvarFile, parFile, direction=''):
+#    """Generate and save a PAR file starting from a COLVAR file or COLVAR data
+#
+#    Args:
+#        colvarFile (string/iterable): COLVAR file name or nested list
+#        parFile (string): output PAR file name
+#        direction (list): list of directions for each frame.
+#            If not provided FW direction is assumed.
+#
+#    """
+#    if type(colvarFile) == str:
+#        colvar = parseTxt(colvarFile)
+#    else:
+#        colvar = colvarFile
+#
+#    # If directions not provided assume FW direction
+#    if len(direction) == 0:
+#        direction = [1] * len(colvar)
+#    elif len(direction) != len(colvar):
+#        sys.exit("COLVAR length and direction list do not have the same length")
+#
+#    # Write PAR
+#    with open(parFile, 'w') as handle:
+#        for i in range(0, len(colvar)):
+#            handle.write(
+#                    '    '.join(
+#                        map(str, colvar[i]) + [str(int(direction[i]))]) + '\n')
 
-    """
-    if type(colvarFile) == str:
-        colvar = parseTxt(colvarFile)
-    else:
-        colvar = colvarFile
 
-    # If directions not provided assume FW direction
-    if len(direction) == 0:
-        direction = [1] * len(colvar)
-    elif len(direction) != len(colvar):
-        sys.exit("COLVAR length and direction list do not have the same length")
-
-    # Write PAR
-    with open(parFile, 'w') as handle:
-        for i in range(0, len(colvar)):
-            handle.write(
-                    '    '.join(
-                        map(str, colvar[i]) + [str(int(direction[i]))]) + '\n')
-
-
-def shootingPoint(parFile, interfaces):
+def shootingPoint(colvarFile, interfaces):
     """ Define shooting point picking random CV value in the window range
-    and extracting the closes frame in the CV space using the PAR file
+    and extracting the closest frame in the CV space using the colvar file
 
     Args:
-        parFile (string): PAR file of the trajectory
+        colvarFile (string): colvar file of the trajectory
         interfaces (string): window in the X:Y:Z format
 
     Returns:
@@ -248,15 +254,15 @@ def shootingPoint(parFile, interfaces):
     # Is redefining a function argument very bad coding? G.
     interfaces = np.array(map(float, interfaces.split(':')))[[0, 2]]
 
-    # Read par file
-    par = parseTxt(parFile)
+    # Read colvar file
+    colvar = parseTxt(colvarFile)
     # Define shooting point CV value
     point = np.random.uniform(interfaces[0], interfaces[1])
     # Find closest frame
-    frame = np.where(par[:, 1] == findNearest(par[:, 1], point))[0][0]
+    frame = np.where(colvar[:, 1] == findNearest(colvar[:, 1], point))[0][0]
 
     # return frame number, CV value, lpf
-    return frame, round(par[frame, 1], 3), int(par[frame, 2])
+    return frame, round(colvar[frame, 1], 3), int(colvar[frame,0]) >= 0
 
 
 def sectionDelimiter(title, size=80, char='-'):
@@ -268,7 +274,7 @@ def sectionDelimiter(title, size=80, char='-'):
     if len(title) > size - len(now) - 1:
         sys.exit('Title too long')
 
-    return char * int(np.floor((size - titleLen) / 2)) + title + char * int(np.ceil((size - titleLen) / 2) - len(now)) + now
+    return '\n' + char * int(np.floor((size - titleLen) / 2)) + title + char * int(np.ceil((size - titleLen) / 2) - len(now)) + now
 
 
 def runGmx(cmd, logFile, logLine='', cwd=cwd):
