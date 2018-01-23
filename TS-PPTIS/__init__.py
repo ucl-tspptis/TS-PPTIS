@@ -537,7 +537,7 @@ class tsAnalysis:
 
         self.beta = 1 / 2.479
 
-    def getRates(fes, Astate=0, Bstate=-1, Acorr=0, Bcorr=0, indexTS=None, error=None, ratesFile='rates.dat', crossFile='crossings.dat', printFile=False):
+    def getRates(fes, Astate=-1, Bstate=-1, Acorr=0, Bcorr=0, indexTS=None, error=None, ratesFile='rates.dat', crossFile='crossings.dat', printFile=False):
         """Reads the free energy surface FES, TS-PPTIS crossing probabilities
         and ouputs, calculate the rate constants and print them to screen and/or to file.
 
@@ -547,7 +547,7 @@ class tsAnalysis:
                 free energy
             ##We need to decide which format we want... for now list
             Astate (int, optional): index of the A state along the FES, if none provided
-                assume first point
+                assume minimum free energy point
             Bstate (int, optional): index of the B state along the FES, if none provided
                 assume last point
             Acorr (float, optional): free energy correction to the A state
@@ -570,9 +570,13 @@ class tsAnalysis:
         # it should be adequately adapted if we decide to output that information in a different
         # format
 
-        As = Astate
         if Bstate == -1:
-            Bs = len(fes)
+            As = np.argmin(fes[1])
+        else:
+            As = Astate
+
+        if Bstate == -1:
+            Bs = len(fes)-1
         else:
             Bs = Bstate
 
