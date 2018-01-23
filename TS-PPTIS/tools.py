@@ -469,12 +469,6 @@ def invertGro(grofields):
     return grofields
 # -------------------------------------------------------
 
-
-if __name__ == "__main__":
-
-    pass
-
-
 ###### In the following are the analysis tools, remove this line when done####
 
 
@@ -581,3 +575,11 @@ def calcR(posTS, ratesFile='rates.dat', crossFile='crossings.dat', debug=False):
     if debug == True:
         return R
     return R[-1]
+
+
+##################################################################################
+
+
+if __name__ == "__main__":
+
+    pass

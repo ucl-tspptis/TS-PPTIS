@@ -590,7 +590,7 @@ class tsAnalysis:
         norm = 0
         for i in range(As, iTS):
             norm += 0.5 * (np.exp(-beta * offFES[i + 1]) + np.exp(-beta * \
-                offFES[i])) * (fes[1][i + 1] - fes[1][i])
+                offFES[i])) * (fes[0][i + 1] - fes[0][i])
         PA = np.exp(-beta * (offFES[iTS] + Acorr)) / norm
 
         PAlow = np.exp(-beta * (offFES[TS] + Acorr - error)) / norm
@@ -599,7 +599,7 @@ class tsAnalysis:
         norm = 0
         for i in range(iTS, Bs - 1):
             norm += 0.5 * (np.exp(-beta * offFES[i + 1]) + np.exp(-beta * \
-                 offFES[i])) * (fes[1][i + 1] - fes[1][i])
+                 offFES[i])) * (fes[0][i + 1] - fes[0][i])
         PB = np.exp(-beta * (offFES[iTS] + Bcorr)) / norm
 
         PBlow = np.exp(-beta * (offFES[TS] + Bcorr - error)) / norm
