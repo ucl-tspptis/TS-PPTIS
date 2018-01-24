@@ -444,21 +444,30 @@ class tsSetup:
         print 'Accepted\t\t\t%s' % accepted
 
         # Write tps.info in the run directory. Structure differs from TS-PPTIS 1
-        tpsInfo = '{:>10s} {:>8s} {:>10s} {:>8s} {:>8s}\n'.format(
-            'TIME', 'LPF', 'TIS CV', 'SIDE', 'CROSS')
+        tpsInfo = '# {:>8s} {:>8s} {:>10s} {:>8s} {:>8s}  {:s}\n'.format(
+            'TIME', 'LPF', 'TIS CV', 'SIDE', 'CROSS', 'CROSS_SPEED')
 
         for i in range(len(jointColvar)):
+
+            cross, crossSpeed = '', ''
+
             if i < len(crossHist):
                 cross = str(int(crossHist[i]))
-            else:
-                cross = ''
+                # Calculate absolute crossing speed
+                if crossHist[i] != 0:
+                   crossSpeed =  str(
+                           np.abs(
+                               round(
+                           (jointColvar[i+1, 1] - jointColvar[i, 1]) / (jointColvar[i+1, 0] - jointColvar[i, 0]),3)))
 
-            tpsInfo += '{:10.3f} {:8d} {:10.3f} {:8d} {:>8s}\n'.format(jointColvar[i, 0],
+
+            tpsInfo += '{:10.3f} {:8d} {:10.3f} {:8d} {:>8s} {:>8s}\n'.format(jointColvar[i, 0],
                                                                        jointColvar[i,
                                                                                    0] >= 0,
                                                                        jointColvar[i, 1],
                                                                        jointSide[i],
-                                                                       cross)
+                                                                       cross,
+                                                                       crossSpeed)
         tpsInfo += '''
 # Timestamp:\t\t%s
 # Run number:\t\t%d
@@ -656,7 +665,7 @@ def testAll():
 
     #ts.setUpTPS('../testfiles/pptis10')
 
-    ts.finalizeTPS('../testfiles/pptis10')
+    ts.finalizeTPS('../testfiles/pptis20')
 
 
 if __name__ == "__main__":
