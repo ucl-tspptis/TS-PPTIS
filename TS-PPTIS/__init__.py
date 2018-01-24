@@ -491,7 +491,9 @@ class tsSetup:
             # write .cv file:
             with open(pathTree['data'] + '%05d.cv' % runNumber, 'w') as handle:
                 for line in jointColvar:
-                    handle.write('    '.join(map(str, line)) + '\n')
+                    handle.write(
+                            ' '.join(
+                                ['{:8.3f}'.format(field) for field in line]) + '\n')
 
 # update tsp_acc.log
 # ORIGINAL
@@ -657,15 +659,15 @@ def testAll():
                  '../testfiles/md.mdp',
                  gmx='/usr/bin/gmx')
 
-    #ts.initWindow('../testfiles/pptis30',
-    #              [0.85,1,1.25],
-    #              '../testfiles/traj_fixed.xtc',
-    #              '../testfiles/COLVAR',
-    #              overwrite=True)
+    ts.initWindow('../testfiles/pptis10',
+                  [0.85,1,1.25],
+                  '../testfiles/traj_fixed.xtc',
+                  '../testfiles/COLVAR',
+                  overwrite=True)
 
-    #ts.setUpTPS('../testfiles/pptis30')
+    #ts.setUpTPS('../testfiles/pptis10')
 
-    ts.finalizeTPS('../testfiles/pptis30')
+    #ts.finalizeTPS('../testfiles/pptis10')
 
 if __name__ == "__main__":
 
