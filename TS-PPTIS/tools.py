@@ -467,6 +467,30 @@ def invertGro(grofields):
     for i in range(2, len(grofields) - 1):
         grofields[i][7:]=[-1 * field for field in grofields[i][7:]]
     return grofields
+
+
+def setTmax(mdpFile, tmax, timestep):
+    """ Sets nsteps to desider number in mdp file
+
+        Args:
+            mdpFile (string): mdp file
+            tmax (float): max time in ps
+            timestep (float): time step in ps
+
+    """
+
+    with open(mdpFile,'r') as handle:
+        mdp = handle.readlines()
+
+    with open(mdpFile,'w') as handle:
+        for i in range(len(mdp)):
+            if 'nsteps' in mdp[i][:6]:
+                mdp[i] = 'nsteps = %d\n' % int(tmax/timestep)
+
+            handle.write(mdp[i])
+
+
+
 # -------------------------------------------------------
 
 ###### In the following are the analysis tools, remove this line when done####

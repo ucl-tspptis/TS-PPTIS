@@ -131,6 +131,11 @@ class tsSetup:
         os.symlink(os.path.abspath(self.colvar),
                    pathTree['data']+'00000.cv')
 
+        # Copy mdp file for generating the final TPR files.
+        # The step number will be set to TMAX
+        shutil.copy(os.path.abspath(self.mdp),
+                   pathTree['temp']+'md.mdp')
+
         # 1. Copy the plumed config file from the script directory to the
         # window directory.
         # *** WILL PROBABLY BREAK IF TS-PPTIS IS LOADED AS A LIBRARY FROM
@@ -173,7 +178,7 @@ class tsSetup:
 
         # Complain if not determined
         if not 'xtc_stride' in config:
-            sys.exit('Unique XTC stride not found in ' + self.mdp)
+            sys.exit('XTC stride not found in ' + self.mdp)
         elif not 'timestep' in config:
             sys.exit('Timestep not found in ' + self.mdp)
         elif not 'colvar_stride' in config:
@@ -243,6 +248,7 @@ class tsSetup:
         # Number of accepted trajectories
         runNumber = len(tpsAcc)
 
+
         if runNumber > 1:
             continuation = True  # The first is the initial so, > 1 is continuation
 
@@ -253,8 +259,9 @@ class tsSetup:
 
         # Delete everything in the temp/ and run/ subdirectory. Keep plumed files
         try:
-            shutil.rmtree(pathTree['temp'])
-            os.makedirs(pathTree['temp'])
+            for fileName in os.listdir(pathTree['temp']):
+                if fileName != 'md.mdp':
+                    os.remove(pathTree['temp']+fileName)
 
             for fileName in os.listdir(pathTree['run']):
                 if not fileName.startswith('plumed'):
@@ -281,6 +288,15 @@ class tsSetup:
         pathLength = len(prevTraj)
         print "Path length:\t\t\t%d (%.1f ps)" % (pathLength,
                     pathLength*config['timestep']*config['trr_stride'])
+
+
+        # Define TMAX
+        tmax = (pathLength*config['timestep']*config['trr_stride'])/np.random.random()
+
+        print 'TMAX:\t\t\t\t%.3f ps' % tmax
+
+        # Write TMAX in mdp file:
+        setTmax(pathTree['temp']+'md.mdp', tmax, config['timestep'])
 
         # Define shooting point and dump gro file
         point = shootingPoint(prevRun + '.cv', config['interfaces'])
@@ -321,12 +337,14 @@ class tsSetup:
 
         print 'Done'
 
+
+
         # Generating TPR files for FW and BW replicas
 
         print 'Generating TPR files for FW and BW replicas...\t',
 
         cmd = '%s grompp -c %s -f %s -p %s -maxwarn 1 -o %s -po %s' % (
-            self.gmx, pathTree['temp'] + 'genvel.gro', self.mdp,
+            self.gmx, pathTree['temp'] + 'genvel.gro', pathTree['temp']+'md.mdp',
             self.top, pathTree['temp'] + 'fw.tpr', path + 'temp/mdout.mdp')
 
         # Use ndx if specified
@@ -335,7 +353,7 @@ class tsSetup:
         runGmx(cmd, gmxLog, 'Generating TPR file for FW replica')
 
         cmd = '%s grompp -c %s -f %s -p %s -maxwarn 1 -o %s -po %s' % (
-            self.gmx, pathTree['temp'] + 'genvel_inverted.gro', self.mdp,
+            self.gmx, pathTree['temp'] + 'genvel_inverted.gro', pathTree['temp']+'md.mdp',
             self.top, pathTree['temp'] + 'bw.tpr', path + 'temp/mdout.mdp')
 
         # Use ndx if specified
@@ -434,13 +452,23 @@ class tsSetup:
                 crossHist[i] = -1
 
         crossCount = np.sum(crossHist == 1), np.sum(crossHist == -1)
-        endPoint = ['A' if jointSide[i] <= window[0] else 'B' for i in (0, -1)]
 
-        # Accept if crossings = 0
-        accepted = np.sum(crossCount) > 0
+        endPoint = ['A' if jointColvar[:,1][i] <= window[0] else 'B' if jointColvar[:,1][i] >= window[2] else ' ' for i in (0, -1)]
+
+        # Accept if crossings = 0 and the trajectories reached the external interfaces (a.k.a. they were not killed by tmax
+        # Or by any other external reason
+        accepted = np.logical_and(
+                        np.sum(crossCount) > 0,
+                        ' ' not in endPoint)
 
         print 'Crossings (+/-):\t\t%d, %d' % (crossCount[0], crossCount[1])
-        print 'Start/end side:\t\t\t%s -> %s' % (endPoint[0], endPoint[1])
+        print 'Start/end side:\t\t\t%s -> %s' % (endPoint[0], endPoint[1]),
+
+        if ' ' in endPoint:
+            print '[TMAX REACHED]'
+        else:
+            print
+
         print 'Accepted\t\t\t%s' % accepted
 
         # Write tps.info in the run directory. Structure differs from TS-PPTIS 1
@@ -660,7 +688,7 @@ def testAll():
                  gmx='/usr/bin/gmx')
 
     ts.initWindow('../testfiles/pptis10',
-                  [0.85,1,1.25],
+                  [0.55,1,1.25],
                   '../testfiles/traj_fixed.xtc',
                   '../testfiles/COLVAR',
                   overwrite=True)
