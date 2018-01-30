@@ -496,15 +496,122 @@ def setTmax(mdpFile, tmax, timestep):
 ###### In the following are the analysis tools, remove this line when done####
 
 
-def calcR(posTS, ratesFile='rates.dat', crossFile='crossings.dat', debug=False):
+def getWeightTraj(pathToFile, index):
+    """Extracts the weights from the rejected trajectory file, to be used
+    when calculating velocities in crossing events.
+        
+    Args:
+        pathToFile (string): path to the tps_rej.dat file
+        index (string or int): trajectory index from which to count the weights
+
+    Returns:
+        (int); weight for the selected trajectory
+    """
+
+        trajFile=open(pathToFile, "r")
+        counter=0
+
+        for line in trajFile.readlines():
+            if str(index) in line:
+                counter+=1
+        trajFile.close()
+
+        return counter+1 #not sure why +1, double check!
+
+
+def analyzeCross(fileName, target):
+    """Reads an ouput .par file in Giorgio's format and extracts information
+    on the crossing events.
+
+    Args:
+        fileName (string): path to the input .par file        
+        target (float): the position of the windows to analyze in the CV space
+    
+    Returns:
+        info (dictionaru): a ditctionary containing information on velocities
+            and number of crossing events to be used in the calculation of the
+            raates.
+    """
+
+    #Note FC: we need to decide if and what we want to log.
+
+    cv=[]
+    data = open(fileName,"r")
+    for line in data.readlines():
+        if line[0]!='#':
+            cv.append(np.float(line.split()[1]))
+    data.close()
+ 
+    vlist = []  #only for logging purposes
+    cross = False    
+
+    n = 0
+    average = 0
+    p0p,p0m = 0,0
+    posCross,negCross = 0,0
+      
+    for i in range(1,len(cv)):
+    
+        crossnow = False
+        hit=''
+        if  cv[i-1] < target  and  cv[i] >= target :
+            cross = True
+            direction = 1
+            crossnow = True
+        elif  cv[i-1] > target  and  cv[i] <= target :
+            cross = True
+            direction = -1
+            crossnow = True
+      
+        if  cross and direction > 0 and cv[i] >= target+1: 
+            hit= '+'
+            p0p+=1
+        elif  cross and direction < 0 and cv[i] <= target-1: 
+            hit= '-'
+            p0m+=1
+                
+        if  crossnow:
+            average += np.abs(cv[i-1] - cv[i]) 
+            n+=1 
+            vlist.append(cv[i] - cv[i-1])  #only for logging
+            if direction>0:
+                posCross += 1
+            elif direction<0:
+                negCross += 1
+            
+        if cv[i] >= target+1: #why + and - 1???
+            end = '+'
+        elif cv[i] <= target-1:
+            end = '-'
+
+    if n > 0:
+        average = average / n
+    else: average = 0 
+
+    if p0p>1: p0p=1
+    if p0m>1: p0m=1
+       
+    info={}
+    info['vel']=average
+    info['p0p']=p0p #only for logging
+    info['p0m']=p0m #only for logging
+    info['nrPos']=posCross
+    info['nrNeg']=negCross
+    info['end']=end
+        
+    return info
+
+
+def calcR(posTS, crossInfo, ratesFile='rates.dat', debug=False):
     """ Calculates the R component of the rate constants with an iterative approach
     described by Juraszek et al. 2013
 
     Args:
         posTS (int): position of the Transition State along the path X-axis
+        crossInfo (list, mixed): list containing information on the crossing events
         ratesFile (string, optional): path to the file containing the probabilities of
             crossing windows
-        crossFile (string, optional): path to the file containing information on the
+        ### REMOVED crossFile (string, optional): path to the file containing information on the
             crossing events
         debug (bool, optional): activate/deactivate the debug option
 
@@ -531,10 +638,9 @@ def calcR(posTS, ratesFile='rates.dat', crossFile='crossings.dat', debug=False):
         ppm.append(float(line[13 + off]))
         ppp.append(float(line[14 + off]))
 
-    cross=readFile(crossFile)
     vel, we, pc, nc, ends=[], [], [], [], []
 
-    for line in cross:
+    for line in crossInfo:
         vel.append(float(line[1]))
         we.append(int(line[4]))
         pc.append(int(line[2]))

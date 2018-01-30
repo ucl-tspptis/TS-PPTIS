@@ -575,8 +575,65 @@ class tsAnalysis:
             print 'Warning:  unrecognised energy units, assuming kJ/mol'
 
         self.beta = 1 / 2.479
+        self.crossInfo=[]
+    
+    def getCrossings(self, folderName='pptis00', rejectedName='pptis00/tps_rej.dat):
+        """Reads par files produced by ts-pptis and extracts information on crossing events to be used by getRates.
 
-    def getRates(fes, Astate=-1, Bstate=-1, Acorr=0, Bcorr=0, indexTS=None, error=None, ratesFile='rates.dat', crossFile='crossings.dat', printFile=False):
+        Args:
+
+            ...
+            
+            folderName (string, optional): path to the pptis output files #at the moment for one window only
+            rejectedName (string, optional): path to the tps_rej.dat file
+        
+        """
+
+        # FC: for the moment being, this function reads par files as in Giorgio's implementation
+        # it will need to be adapted to read from our new output format.
+        # another issue is that it works for one file at a time, I'm not sure how the crossings for each window
+        # can be put together. 
+
+        # WARNING: UNTESTED
+
+
+        ###find the value of lambda0, for the moment old plumed format, alternatively we can implement it as input
+        plumed=open(folderName+'/plumed.dat',"r")
+        for line in plumed.readlines():
+            if line[0]!='TIS':
+                target=np.float(line[-1])
+                break
+        plumed.close()	   
+
+        pp,pm = 0,0
+        velSum, weightsSum = 0,0 #needed only for logging if we decide to keep it
+
+        #load the par files, to be adapted 
+        listPar=[]
+        for fi in os.listdir(folderName+'/tps_data/'):
+            if fi.endswith(".par"):
+                listPar.append(fi)
+        listSorted=sorted(listPar, key=natural_keys)
+
+        #the output will be saved in a dictionary, but we can keep this as a logfile
+        output=open(folderName+'/crossings.dat', 'w')                
+        for fi in listSorted:
+            crossData = analyzeCross(folderName+'/tps_data/'+fi, target) #see tools
+            pp += crossData['p0p']
+            pm += crossData['p0m']  
+            weight = getWeightTraj(rejectedName, fi[:4]) #see tools
+            velSum += crossData['vel']*weight
+            weightsSum += weight
+        
+        #LOGGING and OUTPUTTING...                
+        if crossData['vel'] > 0:    #but why only positive vel? 
+            output.write('{:s}'.format(fi[:4]) +'\t'+ '{:.4f}'.format(crossData['vel'])+'\t' + '{:d}'.format(crossData['nrPos']) + '\t' +\
+                    '{:d}'.format(crossData['nrNeg']) + '\t' +'{:d}'.format(weight)+ '\t' +crossData['end'] +'\n')  
+            self.crossInfo.append([fi[:4],crossData['vel'],crossData['nrPos'],crossData['nrNeg'],weight,crossData['end']]) #a bit redundant at the moment
+        output.close()
+
+    
+    def getRates(self, fes, Astate=-1, Bstate=-1, Acorr=0, Bcorr=0, indexTS=None, error=None, ratesFile='rates.dat', printFile=False):
         """Reads the free energy surface FES, TS-PPTIS crossing probabilities
         and ouputs, calculate the rate constants and print them to screen and/or to file.
 
@@ -599,7 +656,7 @@ class tsAnalysis:
                 if none provided automatically assume 1 kT
             ratesFile (string, optional): path to the file containing the probabilities of
              crossing windows
-            crossFile (string, optional): path to the file containing information on the
+            ###REMOVED crossFile (string, optional): path to the file containing information on the
              crossing events
             printFile (bool, optional): activate/deactivate printing to file
 
@@ -648,7 +705,7 @@ class tsAnalysis:
         PBlow = np.exp(-beta * (offFES[TS] + Bcorr - error)) / norm
         PBupp = np.exp(-beta * (offFES[TS] + Bcorr + error)) / norm
 
-        R = calcR(fes[0][iTS], ratesFile=ratesFile, crossFile=crossFile)
+        R = calcR(fes[0][iTS], ratesFile=ratesFile, crossInfo=self.crossInfo)
 
         kAB = PA * R * 1e12
         kABlow = PAlow * R * 1e12
