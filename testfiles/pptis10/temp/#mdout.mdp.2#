@@ -2,7 +2,7 @@
 ;	File '/home/federico/GitProjects/TS-PPTIS/testfiles/pptis10/temp/mdout.mdp' was generated
 ;	By user: federico (1000)
 ;	On host: alpaca
-;	At date: Thu Feb  1 20:54:22 2018
+;	At date: Thu Feb  1 21:05:09 2018
 
 ;
 
@@ -18,7 +18,7 @@ integrator               = md
 ; Start time and timestep in ps
 tinit                    = 0
 dt                       = 0.002
-nsteps                   = 1836392
+nsteps                   = 315762
 ; For exact run continuation or redoing part of a run
 init-step                = 0
 ; Part index is updated automatically on checkpointing (keeps files separate)

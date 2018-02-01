@@ -1,5 +1,5 @@
-Log file opened on Thu Feb  1 20:54:20 2018
-Host: alpaca  pid: 11491  rank ID: 0  number of ranks:  1
+Log file opened on Thu Feb  1 21:05:07 2018
+Host: alpaca  pid: 12633  rank ID: 0  number of ranks:  1
                    :-) GROMACS - gmx mdrun, VERSION 5.1.4 (-:
 
                             GROMACS is written by:
@@ -148,7 +148,7 @@ Input Parameters:
    comm-mode                      = Linear
    nstcomm                        = 100
    bd-fric                        = 0
-   ld-seed                        = 3315230473
+   ld-seed                        = 1487532247
    emtol                          = 10
    emstep                         = 0.01
    niter                          = 20
@@ -374,38 +374,38 @@ There are: 6088 Atoms
 Constraining the starting coordinates (step 0)
 
 Constraining the coordinates at t0-dt (step 0)
-RMS relative constraint deviation after constraining: 5.07e-05
-Initial temperature: 300.157 K
+RMS relative constraint deviation after constraining: 4.78e-05
+Initial temperature: 301.219 K
 
-Started mdrun on rank 0 Thu Feb  1 20:54:22 2018
+Started mdrun on rank 0 Thu Feb  1 21:05:09 2018
            Step           Time         Lambda
               0        0.00000        0.00000
 
    Energies (kJ/mol)
           Angle    Proper Dih.  Improper Dih.          LJ-14     Coulomb-14
-    5.94054e+02    9.48220e+02    4.72603e+01    2.85490e+02    4.35064e+03
+    5.55273e+02    9.35099e+02    5.47933e+01    2.99426e+02    4.41054e+03
         LJ (SR)  Disper. corr.   Coulomb (SR)   Coul. recip.      Potential
-    1.15443e+04   -7.52269e+02   -9.73137e+04    5.52707e+02   -7.97433e+04
+    1.14585e+04   -7.59255e+02   -9.76281e+04    5.12531e+02   -8.01612e+04
     Kinetic En.   Total Energy    Temperature Pres. DC (bar) Pressure (bar)
-    1.53996e+04   -6.43437e+04    3.04428e+02   -2.03260e+02   -1.82862e+02
+    1.54500e+04   -6.47113e+04    3.05425e+02   -2.07047e+02    4.67177e+01
    Constr. rmsd
-    3.38120e-05
+    2.72885e-05
 
            Step           Time         Lambda
               1        0.00200        0.00000
 
-Writing checkpoint, step 1 at Thu Feb  1 20:54:22 2018
+Writing checkpoint, step 1 at Thu Feb  1 21:05:09 2018
 
 
    Energies (kJ/mol)
           Angle    Proper Dih.  Improper Dih.          LJ-14     Coulomb-14
-    5.25670e+02    9.42977e+02    3.90152e+01    2.86610e+02    4.35664e+03
+    5.24571e+02    9.29307e+02    5.41988e+01    3.01319e+02    4.40941e+03
         LJ (SR)  Disper. corr.   Coulomb (SR)   Coul. recip.      Potential
-    1.15278e+04   -7.52269e+02   -9.75848e+04    5.32981e+02   -8.01254e+04
+    1.14298e+04   -7.59255e+02   -9.79236e+04    5.05432e+02   -8.05289e+04
     Kinetic En.   Total Energy    Temperature Pres. DC (bar) Pressure (bar)
-    1.57670e+04   -6.43584e+04    3.11692e+02   -2.03260e+02   -4.76018e+02
+    1.58059e+04   -6.47230e+04    3.12462e+02   -2.07047e+02   -1.95064e+02
    Constr. rmsd
-    4.01071e-05
+    2.95203e-05
 
 	<======  ###############  ==>
 	<====  A V E R A G E S  ====>
@@ -415,23 +415,23 @@ Writing checkpoint, step 1 at Thu Feb  1 20:54:22 2018
 
    Energies (kJ/mol)
           Angle    Proper Dih.  Improper Dih.          LJ-14     Coulomb-14
-    5.94054e+02    9.48220e+02    4.72603e+01    2.85490e+02    4.35064e+03
+    5.55273e+02    9.35099e+02    5.47933e+01    2.99426e+02    4.41054e+03
         LJ (SR)  Disper. corr.   Coulomb (SR)   Coul. recip.      Potential
-    1.15443e+04   -7.52269e+02   -9.73137e+04    5.52707e+02   -7.97433e+04
+    1.14585e+04   -7.59255e+02   -9.76281e+04    5.12531e+02   -8.01612e+04
     Kinetic En.   Total Energy    Temperature Pres. DC (bar) Pressure (bar)
-    1.53996e+04   -6.43437e+04    3.04428e+02   -2.03260e+02   -1.82862e+02
+    1.54500e+04   -6.47113e+04    3.05425e+02   -2.07047e+02    4.67177e+01
    Constr. rmsd
     0.00000e+00
 
    Total Virial (kJ/mol)
-    5.38635e+03   -1.04913e+02   -2.74340e+02
-   -1.05131e+02    4.58811e+03    3.56544e+02
-   -2.74488e+02    3.57405e+02    6.44148e+03
+    5.45884e+03   -1.02866e+01    8.55199e+01
+   -1.06552e+01    4.73450e+03    8.99460e+02
+    8.63582e+01    8.98830e+02    4.99935e+03
 
    Pressure (bar)
-   -9.91573e+01    1.11606e+02    1.77582e+02
-    1.11724e+02    2.26467e+02   -2.12635e+02
-    1.77662e+02   -2.13100e+02   -6.75895e+02
+   -1.17132e+02   -6.56203e+01   -2.14847e+01
+   -6.54195e+01    2.31254e+02   -5.06275e+02
+   -2.19414e+01   -5.05932e+02    2.60320e+01
 
 
 	M E G A - F L O P S   A C C O U N T I N G
@@ -443,8 +443,8 @@ Writing checkpoint, step 1 at Thu Feb  1 20:54:22 2018
 
  Computing:                               M-Number         M-Flops  % Flops
 -----------------------------------------------------------------------------
- Pair Search distance check               0.577248           5.195     0.6
- NxN Ewald Elec. + LJ [V&F]               8.507008         910.250    97.3
+ Pair Search distance check               0.553776           4.984     0.5
+ NxN Ewald Elec. + LJ [V&F]               8.578944         917.947    97.4
  1,4 nonbonded interactions               0.001468           0.132     0.0
  Calc Weights                             0.036528           1.315     0.1
  Spread Q Bspline                         0.779264           1.559     0.2
@@ -464,7 +464,7 @@ Writing checkpoint, step 1 at Thu Feb  1 20:54:22 2018
  Constraint-Vir                           0.012186           0.292     0.0
  Settle                                   0.007744           2.501     0.3
 -----------------------------------------------------------------------------
- Total                                                     935.330   100.0
+ Total                                                     942.816   100.0
 -----------------------------------------------------------------------------
 
 
@@ -475,23 +475,23 @@ On 1 MPI rank, each using 12 OpenMP threads
  Computing:          Num   Num      Call    Wall time         Giga-Cycles
                      Ranks Threads  Count      (s)         total sum    %
 -----------------------------------------------------------------------------
- Neighbor search        1   12          1       0.004          0.096   1.6
- Launch GPU ops.        1   12          2       0.001          0.017   0.3
- Force                  1   12          2       0.005          0.128   2.2
- PME mesh               1   12          2       0.018          0.422   7.1
- Wait GPU local         1   12          2       0.000          0.003   0.0
+ Neighbor search        1   12          1       0.027          0.659  11.4
+ Launch GPU ops.        1   12          2       0.001          0.016   0.3
+ Force                  1   12          2       0.002          0.058   1.0
+ PME mesh               1   12          2       0.003          0.074   1.3
+ Wait GPU local         1   12          2       0.000          0.002   0.0
  NB X/F buffer ops.     1   12          3       0.000          0.001   0.0
- Write traj.            1   12          1       0.218          5.244  88.3
- Update                 1   12          2       0.000          0.004   0.1
- Constraints            1   12          2       0.000          0.011   0.2
+ Write traj.            1   12          1       0.206          4.938  85.5
+ Update                 1   12          2       0.000          0.003   0.0
+ Constraints            1   12          2       0.000          0.010   0.2
  Rest                                           0.001          0.014   0.2
 -----------------------------------------------------------------------------
- Total                                          0.247          5.939 100.0
+ Total                                          0.241          5.775 100.0
 -----------------------------------------------------------------------------
  Breakdown of PME mesh computation
 -----------------------------------------------------------------------------
- PME spread/gather      1   12          4       0.016          0.388   6.5
- PME 3D-FFT             1   12          4       0.001          0.025   0.4
+ PME spread/gather      1   12          4       0.003          0.068   1.2
+ PME 3D-FFT             1   12          4       0.000          0.004   0.1
  PME solve Elec         1   12          2       0.000          0.001   0.0
 -----------------------------------------------------------------------------
 
@@ -499,24 +499,28 @@ On 1 MPI rank, each using 12 OpenMP threads
 -----------------------------------------------------------------------------
  Computing:                         Count  Wall t (s)      ms/step       %
 -----------------------------------------------------------------------------
- Pair list H2D                          1       0.001        0.988    44.8
- X / q H2D                              2       0.000        0.045     4.1
- Nonbonded F+ene k.                     1       0.000        0.492    22.3
- Nonbonded F+ene+prune k.               1       0.001        0.564    25.5
- F D2H                                  2       0.000        0.037     3.3
+ Pair list H2D                          1       0.001        0.974    46.0
+ X / q H2D                              2       0.000        0.040     3.8
+ Nonbonded F+ene k.                     1       0.000        0.462    21.8
+ Nonbonded F+ene+prune k.               1       0.001        0.525    24.8
+ F D2H                                  2       0.000        0.037     3.5
 -----------------------------------------------------------------------------
- Total                                          0.002        1.104   100.0
+ Total                                          0.002        1.058   100.0
 -----------------------------------------------------------------------------
 
-Force evaluation time GPU/CPU: 1.104 ms/11.442 ms = 0.096
+Force evaluation time GPU/CPU: 1.058 ms/2.745 ms = 0.385
 For optimal performance this ratio should be close to 1!
 
 
 NOTE: The GPU has >25% less load than the CPU. This imbalance causes
       performance loss.
 
+NOTE: 11 % of the run time was spent in pair search,
+      you might want to increase nstlist (this has no effect on accuracy)
+
+
                Core t (s)   Wall t (s)        (%)
-       Time:        0.413        0.247      167.0
+       Time:        0.371        0.241      154.0
                  (ns/day)    (hour/ns)
-Performance:        1.397       17.181
-Finished mdrun on rank 0 Thu Feb  1 20:54:22 2018
+Performance:        1.437       16.706
+Finished mdrun on rank 0 Thu Feb  1 21:05:09 2018

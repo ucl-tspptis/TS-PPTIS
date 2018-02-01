@@ -149,10 +149,10 @@ class tsSetup:
             window[0])).replace('__UL__', str(window[2]))
 
         with open(path + 'run/plumed_fw.dat', 'w') as handle:
-            handle.write(committorText.replace('__COLVAR__', 'COLVAR_FW'))
+            handle.write(committorText.replace('__COLVAR__', path+'run/COLVAR_FW'))
 
         with open(path + 'run/plumed_bw.dat', 'w') as handle:
-            handle.write(committorText.replace('__COLVAR__', 'COLVAR_BW'))
+            handle.write(committorText.replace('__COLVAR__', path+'run/COLVAR_BW'))
 
 
         # Determine XTC, TRR and COLVAR stride and timestep. WIll be written in window.cfg
@@ -740,8 +740,8 @@ def testAll():
     ts = tsSetup('../testfiles/topol.top',
                  '../testfiles/system.gro',
                  '../testfiles/md.mdp',
-                 gmx='/usr/bin/gmx')
-#                  gmx='/usr/local/gromacs/bin/gmx')
+#                 gmx='/usr/bin/gmx')
+                  gmx='/usr/local/gromacs/bin/gmx')
 
     ts.initWindow('../testfiles/pptis10',
                   [0.55,1,1.25],
@@ -749,9 +749,9 @@ def testAll():
                   '../testfiles/COLVAR',
                   overwrite=True)
 
-#    ts.setUpTPS('../testfiles/pptis10')
+    ts.setUpTPS('../testfiles/pptis10')
 
-#    ts.finalizeTPS('../testfiles/pptis10')
+    ts.finalizeTPS('../testfiles/pptis10')
 
 if __name__ == "__main__":
 

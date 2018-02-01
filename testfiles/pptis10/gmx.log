@@ -1,5 +1,5 @@
 
-DEBUG: 2018-02-01 20:54:19	Generating tpr for velocity generation
+DEBUG: 2018-02-01 21:05:04	Generating tpr for velocity generation
                   :-) GROMACS - gmx grompp, VERSION 5.1.4 (-:
 
                             GROMACS is written by:
@@ -31,7 +31,7 @@ Data prefix:  /usr/local/gromacs
 Command line:
   gmx grompp -c /home/federico/GitProjects/TS-PPTIS/testfiles/pptis10/temp/frame.gro -f ./invert.mdp -p ../testfiles/topol.top -maxwarn 1 -o /home/federico/GitProjects/TS-PPTIS/testfiles/pptis10/temp/genvel.tpr -po /home/federico/GitProjects/TS-PPTIS/testfiles/pptis10/temp/mdout.mdp
 
-Setting the LD random seed to 3315230473
+Setting the LD random seed to 1487532247
 Generated 435 of the 435 non-bonded parameter combinations
 Generating 1-4 interactions: fudge = 0.5
 Generated 435 of the 435 1-4 parameter combinations
@@ -53,7 +53,7 @@ NOTE 1 [file topol.top, line 3210]:
   For energy conservation with LINCS, lincs_iter should be 2 or larger.
 
 
-Setting gen_seed to 659034639
+Setting gen_seed to 3119000340
 Velocities were taken from a Maxwell distribution at 300 K
 Removing all charge groups because cutoff-scheme=Verlet
 Number of degrees of freedom in T-Coupling group rest is 12168.00
@@ -68,7 +68,7 @@ There were 2 notes
 
 There was 1 warning
 
-gcq#35: "All Work and No Play Makes Jack a Dull Boy" (The Shining)
+gcq#395: "It was something to at least have a choice of nightmares" (Joseph Conrad)
 
 turning all bonds into constraints...
 turning all bonds into constraints...
@@ -84,10 +84,10 @@ Calculated rlist for 1x1 atom pair-list as 1.035 nm, buffer size 0.035 nm
 Set rlist, assuming 4x4 atom pair-list, to 1.000 nm, buffer size 0.000 nm
 Note that mdrun will redetermine rlist based on the actual pair-list setup
 Calculating fourier grid dimensions for X Y Z
-Using a fourier grid of 25x28x24, spacing 0.159 0.153 0.150
+Using a fourier grid of 25x28x24, spacing 0.159 0.152 0.150
 This run will generate roughly 0 Mb of data
 
-DEBUG: 2018-02-01 20:54:20	Running 1 step
+DEBUG: 2018-02-01 21:05:07	Running 1 step
                    :-) GROMACS - gmx mdrun, VERSION 5.1.4 (-:
 
                             GROMACS is written by:
@@ -154,15 +154,19 @@ Writing final coordinates.
 NOTE: The GPU has >25% less load than the CPU. This imbalance causes
       performance loss.
 
+NOTE: 11 % of the run time was spent in pair search,
+      you might want to increase nstlist (this has no effect on accuracy)
+
+
                Core t (s)   Wall t (s)        (%)
-       Time:        0.413        0.247      167.0
+       Time:        0.371        0.241      154.0
                  (ns/day)    (hour/ns)
-Performance:        1.397       17.181
+Performance:        1.437       16.706
 
-gcq#421: "The determined Real Programmer can write FORTRAN programs in any language." (Ed Post)
+gcq#172: "That Was Really Cool" (Butthead)
 
 
-DEBUG: 2018-02-01 20:54:22	Generating TPR file for FW replica
+DEBUG: 2018-02-01 21:05:09	Generating TPR file for FW replica
                   :-) GROMACS - gmx grompp, VERSION 5.1.4 (-:
 
                             GROMACS is written by:
@@ -196,7 +200,7 @@ Command line:
 
 
 Back Off! I just backed up /home/federico/GitProjects/TS-PPTIS/testfiles/pptis10/temp/mdout.mdp to /home/federico/GitProjects/TS-PPTIS/testfiles/pptis10/temp/#mdout.mdp.1#
-Setting the LD random seed to 3440200436
+Setting the LD random seed to 478306964
 Generated 435 of the 435 non-bonded parameter combinations
 Generating 1-4 interactions: fudge = 0.5
 Generated 435 of the 435 1-4 parameter combinations
@@ -208,7 +212,7 @@ Number of degrees of freedom in T-Coupling group Protein is 551.86
 Number of degrees of freedom in T-Coupling group non-Protein is 11616.14
 Estimate for the relative computational load of the PME mesh part: 0.20
 
-gcq#372: "The future still looks good, and you've got time to rectify all the things that you should" (G. Harrison)
+gcq#276: "I'll Match Your DNA" (Red Hot Chili Peppers)
 
 turning all bonds into constraints...
 turning all bonds into constraints...
@@ -224,10 +228,10 @@ Calculated rlist for 1x1 atom pair-list as 1.035 nm, buffer size 0.035 nm
 Set rlist, assuming 4x4 atom pair-list, to 1.000 nm, buffer size 0.000 nm
 Note that mdrun will redetermine rlist based on the actual pair-list setup
 Calculating fourier grid dimensions for X Y Z
-Using a fourier grid of 25x28x24, spacing 0.159 0.153 0.150
-This run will generate roughly 119 Mb of data
+Using a fourier grid of 25x28x24, spacing 0.159 0.152 0.150
+This run will generate roughly 21 Mb of data
 
-DEBUG: 2018-02-01 20:54:23	Generating TPR file for BW replica
+DEBUG: 2018-02-01 21:05:12	Generating TPR file for BW replica
                   :-) GROMACS - gmx grompp, VERSION 5.1.4 (-:
 
                             GROMACS is written by:
@@ -261,7 +265,7 @@ Command line:
 
 
 Back Off! I just backed up /home/federico/GitProjects/TS-PPTIS/testfiles/pptis10/temp/mdout.mdp to /home/federico/GitProjects/TS-PPTIS/testfiles/pptis10/temp/#mdout.mdp.2#
-Setting the LD random seed to 3449531095
+Setting the LD random seed to 3868712084
 Generated 435 of the 435 non-bonded parameter combinations
 Generating 1-4 interactions: fudge = 0.5
 Generated 435 of the 435 1-4 parameter combinations
@@ -273,7 +277,7 @@ Number of degrees of freedom in T-Coupling group Protein is 551.86
 Number of degrees of freedom in T-Coupling group non-Protein is 11616.14
 Estimate for the relative computational load of the PME mesh part: 0.20
 
-gcq#60: "Would You Like to Be the Monster Tonight ?" (Captain Beefheart)
+gcq#137: "Kick the Dog and You Will Die" (Magnapop)
 
 turning all bonds into constraints...
 turning all bonds into constraints...
@@ -289,5 +293,5 @@ Calculated rlist for 1x1 atom pair-list as 1.035 nm, buffer size 0.035 nm
 Set rlist, assuming 4x4 atom pair-list, to 1.000 nm, buffer size 0.000 nm
 Note that mdrun will redetermine rlist based on the actual pair-list setup
 Calculating fourier grid dimensions for X Y Z
-Using a fourier grid of 25x28x24, spacing 0.159 0.153 0.150
-This run will generate roughly 119 Mb of data
+Using a fourier grid of 25x28x24, spacing 0.159 0.152 0.150
+This run will generate roughly 21 Mb of data
