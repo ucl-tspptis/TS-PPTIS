@@ -1,21 +1,21 @@
 
-DEBUG: 2018-01-14 18:01:47	Generating tpr for velocity generation
-                      :-) GROMACS - gmx grompp, 2016.3 (-:
+DEBUG: 2018-02-01 20:54:19	Generating tpr for velocity generation
+                  :-) GROMACS - gmx grompp, VERSION 5.1.4 (-:
 
                             GROMACS is written by:
      Emile Apol      Rossen Apostolov  Herman J.C. Berendsen    Par Bjelkmar   
- Aldert van Buuren   Rudi van Drunen     Anton Feenstra    Gerrit Groenhof  
- Christoph Junghans   Anca Hamuraru    Vincent Hindriksen Dimitrios Karkoulis
-    Peter Kasson        Jiri Kraus      Carsten Kutzner      Per Larsson    
-  Justin A. Lemkul   Magnus Lundborg   Pieter Meulenhoff    Erik Marklund   
-   Teemu Murtola       Szilard Pall       Sander Pronk      Roland Schulz   
-  Alexey Shvetsov     Michael Shirts     Alfons Sijbers     Peter Tieleman  
-  Teemu Virolainen  Christian Wennberg    Maarten Wolf   
+ Aldert van Buuren   Rudi van Drunen     Anton Feenstra   Sebastian Fritsch 
+  Gerrit Groenhof   Christoph Junghans   Anca Hamuraru    Vincent Hindriksen
+ Dimitrios Karkoulis    Peter Kasson        Jiri Kraus      Carsten Kutzner  
+    Per Larsson      Justin A. Lemkul   Magnus Lundborg   Pieter Meulenhoff 
+   Erik Marklund      Teemu Murtola       Szilard Pall       Sander Pronk   
+   Roland Schulz     Alexey Shvetsov     Michael Shirts     Alfons Sijbers  
+   Peter Tieleman    Teemu Virolainen  Christian Wennberg    Maarten Wolf   
                            and the project leaders:
         Mark Abraham, Berk Hess, Erik Lindahl, and David van der Spoel
 
 Copyright (c) 1991-2000, University of Groningen, The Netherlands.
-Copyright (c) 2001-2017, The GROMACS development team at
+Copyright (c) 2001-2015, The GROMACS development team at
 Uppsala University, Stockholm University and
 the Royal Institute of Technology, Sweden.
 check out http://www.gromacs.org for more information.
@@ -25,27 +25,27 @@ under the terms of the GNU Lesser General Public License
 as published by the Free Software Foundation; either version 2.1
 of the License, or (at your option) any later version.
 
-GROMACS:      gmx grompp, version 2016.3
-Executable:   /usr/bin/gmx
-Data prefix:  /usr
-Working dir:  /home/giulio/Dropbox/UCL/software/TS-PPTIS/TS-PPTIS/TS-PPTIS
+GROMACS:      gmx grompp, VERSION 5.1.4
+Executable:   /usr/local/gromacs/bin/gmx
+Data prefix:  /usr/local/gromacs
 Command line:
-  gmx grompp -c /home/giulio/Dropbox/UCL/software/TS-PPTIS/TS-PPTIS/testfiles/pptis10/temp/frame.gro -f ./invert.mdp -p ../testfiles/topol.top -maxwarn 1 -o /home/giulio/Dropbox/UCL/software/TS-PPTIS/TS-PPTIS/testfiles/pptis10/temp/genvel.tpr -po /home/giulio/Dropbox/UCL/software/TS-PPTIS/TS-PPTIS/testfiles/pptis10/temp/mdout.mdp
+  gmx grompp -c /home/federico/GitProjects/TS-PPTIS/testfiles/pptis10/temp/frame.gro -f ./invert.mdp -p ../testfiles/topol.top -maxwarn 1 -o /home/federico/GitProjects/TS-PPTIS/testfiles/pptis10/temp/genvel.tpr -po /home/federico/GitProjects/TS-PPTIS/testfiles/pptis10/temp/mdout.mdp
 
-Setting the LD random seed to -1333746910
+Setting the LD random seed to 3315230473
 Generated 435 of the 435 non-bonded parameter combinations
 Generating 1-4 interactions: fudge = 0.5
 Generated 435 of the 435 1-4 parameter combinations
 Excluding 3 bonded neighbours molecule type 'system1'
 Excluding 3 bonded neighbours molecule type 'Na+'
 Excluding 3 bonded neighbours molecule type 'WAT'
-Warning: atom name 2 in ../testfiles/topol.top and /home/giulio/Dropbox/UCL/software/TS-PPTIS/TS-PPTIS/testfiles/pptis10/temp/frame.gro does not match (H1 - H)
+Warning: atom name 2 in ../testfiles/topol.top and /home/federico/GitProjects/TS-PPTIS/testfiles/pptis10/temp/frame.gro does not match (H1 - H)
 
 WARNING 1 [file topol.top, line 3210]:
   1 non-matching atom name
   atom names from ../testfiles/topol.top will be used
   atom names from
-  /home/giulio/Dropbox/UCL/software/TS-PPTIS/TS-PPTIS/testfiles/pptis10/temp/frame.gro will be ignored
+  /home/federico/GitProjects/TS-PPTIS/testfiles/pptis10/temp/frame.gro will
+  be ignored
 
 
 
@@ -53,7 +53,7 @@ NOTE 1 [file topol.top, line 3210]:
   For energy conservation with LINCS, lincs_iter should be 2 or larger.
 
 
-Setting gen_seed to 757284228
+Setting gen_seed to 659034639
 Velocities were taken from a Maxwell distribution at 300 K
 Removing all charge groups because cutoff-scheme=Verlet
 Number of degrees of freedom in T-Coupling group rest is 12168.00
@@ -62,13 +62,13 @@ NOTE 2 [file ./invert.mdp]:
   NVE simulation: will use the initial temperature of 300.000 K for
   determining the Verlet buffer size
 
-Estimate for the relative computational load of the PME mesh part: 0.15
+Estimate for the relative computational load of the PME mesh part: 0.20
 
 There were 2 notes
 
 There was 1 warning
 
-GROMACS reminds you: "C has the power of assembly language and the convenience of... assembly language." (Dennis Ritchie)
+gcq#35: "All Work and No Play Makes Jack a Dull Boy" (The Shining)
 
 turning all bonds into constraints...
 turning all bonds into constraints...
@@ -84,26 +84,26 @@ Calculated rlist for 1x1 atom pair-list as 1.035 nm, buffer size 0.035 nm
 Set rlist, assuming 4x4 atom pair-list, to 1.000 nm, buffer size 0.000 nm
 Note that mdrun will redetermine rlist based on the actual pair-list setup
 Calculating fourier grid dimensions for X Y Z
-Using a fourier grid of 25x28x24, spacing 0.159 0.152 0.150
+Using a fourier grid of 25x28x24, spacing 0.159 0.153 0.150
 This run will generate roughly 0 Mb of data
 
-DEBUG: 2018-01-14 18:01:47	Running 1 step
-                      :-) GROMACS - gmx mdrun, 2016.3 (-:
+DEBUG: 2018-02-01 20:54:20	Running 1 step
+                   :-) GROMACS - gmx mdrun, VERSION 5.1.4 (-:
 
                             GROMACS is written by:
      Emile Apol      Rossen Apostolov  Herman J.C. Berendsen    Par Bjelkmar   
- Aldert van Buuren   Rudi van Drunen     Anton Feenstra    Gerrit Groenhof  
- Christoph Junghans   Anca Hamuraru    Vincent Hindriksen Dimitrios Karkoulis
-    Peter Kasson        Jiri Kraus      Carsten Kutzner      Per Larsson    
-  Justin A. Lemkul   Magnus Lundborg   Pieter Meulenhoff    Erik Marklund   
-   Teemu Murtola       Szilard Pall       Sander Pronk      Roland Schulz   
-  Alexey Shvetsov     Michael Shirts     Alfons Sijbers     Peter Tieleman  
-  Teemu Virolainen  Christian Wennberg    Maarten Wolf   
+ Aldert van Buuren   Rudi van Drunen     Anton Feenstra   Sebastian Fritsch 
+  Gerrit Groenhof   Christoph Junghans   Anca Hamuraru    Vincent Hindriksen
+ Dimitrios Karkoulis    Peter Kasson        Jiri Kraus      Carsten Kutzner  
+    Per Larsson      Justin A. Lemkul   Magnus Lundborg   Pieter Meulenhoff 
+   Erik Marklund      Teemu Murtola       Szilard Pall       Sander Pronk   
+   Roland Schulz     Alexey Shvetsov     Michael Shirts     Alfons Sijbers  
+   Peter Tieleman    Teemu Virolainen  Christian Wennberg    Maarten Wolf   
                            and the project leaders:
         Mark Abraham, Berk Hess, Erik Lindahl, and David van der Spoel
 
 Copyright (c) 1991-2000, University of Groningen, The Netherlands.
-Copyright (c) 2001-2017, The GROMACS development team at
+Copyright (c) 2001-2015, The GROMACS development team at
 Uppsala University, Stockholm University and
 the Royal Institute of Technology, Sweden.
 check out http://www.gromacs.org for more information.
@@ -113,61 +113,72 @@ under the terms of the GNU Lesser General Public License
 as published by the Free Software Foundation; either version 2.1
 of the License, or (at your option) any later version.
 
-GROMACS:      gmx mdrun, version 2016.3
-Executable:   /usr/bin/gmx
-Data prefix:  /usr
-Working dir:  /home/giulio/Dropbox/UCL/software/TS-PPTIS/TS-PPTIS/TS-PPTIS
+GROMACS:      gmx mdrun, VERSION 5.1.4
+Executable:   /usr/local/gromacs/bin/gmx
+Data prefix:  /usr/local/gromacs
 Command line:
-  gmx mdrun -s /home/giulio/Dropbox/UCL/software/TS-PPTIS/TS-PPTIS/testfiles/pptis10/temp/genvel.tpr -deffnm /home/giulio/Dropbox/UCL/software/TS-PPTIS/TS-PPTIS/testfiles/pptis10/temp/genvel
+  gmx mdrun -s /home/federico/GitProjects/TS-PPTIS/testfiles/pptis10/temp/genvel.tpr -deffnm /home/federico/GitProjects/TS-PPTIS/testfiles/pptis10/temp/genvel
 
 
-Running on 1 node with total 4 cores, 8 logical cores
+Running on 1 node with total 12 cores, 12 logical cores, 2 compatible GPUs
 Hardware detected:
   CPU info:
-    Vendor: Intel
-    Brand:  Intel(R) Core(TM) i7-3630QM CPU @ 2.40GHz
+    Vendor: GenuineIntel
+    Brand:  Intel(R) Xeon(R) CPU E5-2620 0 @ 2.00GHz
     SIMD instructions most likely to fit this hardware: AVX_256
-    SIMD instructions selected at GROMACS compile time: SSE2
+    SIMD instructions selected at GROMACS compile time: AVX_256
+  GPU info:
+    Number of GPUs detected: 2
+    #0: NVIDIA GeForce GTX 680, compute cap.: 3.0, ECC:  no, stat: compatible
+    #1: NVIDIA GeForce GTX 680, compute cap.: 3.0, ECC:  no, stat: compatible
 
-  Hardware topology: Full, with devices
-
-Compiled SIMD instructions: SSE2, GROMACS could use AVX_256 on this machine, which is better.
-
-Reading file /home/giulio/Dropbox/UCL/software/TS-PPTIS/TS-PPTIS/testfiles/pptis10/temp/genvel.tpr, VERSION 2016.3 (single precision)
+Reading file /home/federico/GitProjects/TS-PPTIS/testfiles/pptis10/temp/genvel.tpr, VERSION 5.1.4 (single precision)
 Can not increase nstlist because an NVE ensemble is used
-Using 1 MPI thread
-Using 8 OpenMP threads 
+Using 12 OpenMP threads 
+
+2 compatible GPUs are present, with IDs 0,1
+1 GPU auto-selected for this run.
+Mapping of GPU ID to the 1 PP rank in this node: 0
+
+
+NOTE: potentially sub-optimal launch configuration, gmx started with less
+      PP process than GPUs available.
+      Each PP process can use only one GPU, 1 GPU will be used.
 
 starting mdrun 'Generic title'
 1 steps,      0.0 ps.
 
 Writing final coordinates.
 
+
+NOTE: The GPU has >25% less load than the CPU. This imbalance causes
+      performance loss.
+
                Core t (s)   Wall t (s)        (%)
-       Time:        1.014        0.127      800.0
+       Time:        0.413        0.247      167.0
                  (ns/day)    (hour/ns)
-Performance:        2.727        8.801
+Performance:        1.397       17.181
 
-GROMACS reminds you: "California, R.I.P." (Red Hot Chili Peppars)
+gcq#421: "The determined Real Programmer can write FORTRAN programs in any language." (Ed Post)
 
 
-DEBUG: 2018-01-14 18:01:48	Generating TPR file for FW replica
-                      :-) GROMACS - gmx grompp, 2016.3 (-:
+DEBUG: 2018-02-01 20:54:22	Generating TPR file for FW replica
+                  :-) GROMACS - gmx grompp, VERSION 5.1.4 (-:
 
                             GROMACS is written by:
      Emile Apol      Rossen Apostolov  Herman J.C. Berendsen    Par Bjelkmar   
- Aldert van Buuren   Rudi van Drunen     Anton Feenstra    Gerrit Groenhof  
- Christoph Junghans   Anca Hamuraru    Vincent Hindriksen Dimitrios Karkoulis
-    Peter Kasson        Jiri Kraus      Carsten Kutzner      Per Larsson    
-  Justin A. Lemkul   Magnus Lundborg   Pieter Meulenhoff    Erik Marklund   
-   Teemu Murtola       Szilard Pall       Sander Pronk      Roland Schulz   
-  Alexey Shvetsov     Michael Shirts     Alfons Sijbers     Peter Tieleman  
-  Teemu Virolainen  Christian Wennberg    Maarten Wolf   
+ Aldert van Buuren   Rudi van Drunen     Anton Feenstra   Sebastian Fritsch 
+  Gerrit Groenhof   Christoph Junghans   Anca Hamuraru    Vincent Hindriksen
+ Dimitrios Karkoulis    Peter Kasson        Jiri Kraus      Carsten Kutzner  
+    Per Larsson      Justin A. Lemkul   Magnus Lundborg   Pieter Meulenhoff 
+   Erik Marklund      Teemu Murtola       Szilard Pall       Sander Pronk   
+   Roland Schulz     Alexey Shvetsov     Michael Shirts     Alfons Sijbers  
+   Peter Tieleman    Teemu Virolainen  Christian Wennberg    Maarten Wolf   
                            and the project leaders:
         Mark Abraham, Berk Hess, Erik Lindahl, and David van der Spoel
 
 Copyright (c) 1991-2000, University of Groningen, The Netherlands.
-Copyright (c) 2001-2017, The GROMACS development team at
+Copyright (c) 2001-2015, The GROMACS development team at
 Uppsala University, Stockholm University and
 the Royal Institute of Technology, Sweden.
 check out http://www.gromacs.org for more information.
@@ -177,16 +188,15 @@ under the terms of the GNU Lesser General Public License
 as published by the Free Software Foundation; either version 2.1
 of the License, or (at your option) any later version.
 
-GROMACS:      gmx grompp, version 2016.3
-Executable:   /usr/bin/gmx
-Data prefix:  /usr
-Working dir:  /home/giulio/Dropbox/UCL/software/TS-PPTIS/TS-PPTIS/TS-PPTIS
+GROMACS:      gmx grompp, VERSION 5.1.4
+Executable:   /usr/local/gromacs/bin/gmx
+Data prefix:  /usr/local/gromacs
 Command line:
-  gmx grompp -c /home/giulio/Dropbox/UCL/software/TS-PPTIS/TS-PPTIS/testfiles/pptis10/temp/genvel.gro -f ../testfiles/md.mdp -p ../testfiles/topol.top -maxwarn 1 -o /home/giulio/Dropbox/UCL/software/TS-PPTIS/TS-PPTIS/testfiles/pptis10/temp/fw.tpr -po /home/giulio/Dropbox/UCL/software/TS-PPTIS/TS-PPTIS/testfiles/pptis10/temp/mdout.mdp
+  gmx grompp -c /home/federico/GitProjects/TS-PPTIS/testfiles/pptis10/temp/genvel.gro -f /home/federico/GitProjects/TS-PPTIS/testfiles/pptis10/temp/md.mdp -p ../testfiles/topol.top -maxwarn 1 -o /home/federico/GitProjects/TS-PPTIS/testfiles/pptis10/temp/fw.tpr -po /home/federico/GitProjects/TS-PPTIS/testfiles/pptis10/temp/mdout.mdp
 
 
-Back Off! I just backed up /home/giulio/Dropbox/UCL/software/TS-PPTIS/TS-PPTIS/testfiles/pptis10/temp/mdout.mdp to /home/giulio/Dropbox/UCL/software/TS-PPTIS/TS-PPTIS/testfiles/pptis10/temp/#mdout.mdp.1#
-Setting the LD random seed to 1934199586
+Back Off! I just backed up /home/federico/GitProjects/TS-PPTIS/testfiles/pptis10/temp/mdout.mdp to /home/federico/GitProjects/TS-PPTIS/testfiles/pptis10/temp/#mdout.mdp.1#
+Setting the LD random seed to 3440200436
 Generated 435 of the 435 non-bonded parameter combinations
 Generating 1-4 interactions: fudge = 0.5
 Generated 435 of the 435 1-4 parameter combinations
@@ -196,9 +206,9 @@ Excluding 3 bonded neighbours molecule type 'WAT'
 Removing all charge groups because cutoff-scheme=Verlet
 Number of degrees of freedom in T-Coupling group Protein is 551.86
 Number of degrees of freedom in T-Coupling group non-Protein is 11616.14
-Estimate for the relative computational load of the PME mesh part: 0.15
+Estimate for the relative computational load of the PME mesh part: 0.20
 
-GROMACS reminds you: "I Don't Like Dirt" (The Breeders)
+gcq#372: "The future still looks good, and you've got time to rectify all the things that you should" (G. Harrison)
 
 turning all bonds into constraints...
 turning all bonds into constraints...
@@ -214,26 +224,26 @@ Calculated rlist for 1x1 atom pair-list as 1.035 nm, buffer size 0.035 nm
 Set rlist, assuming 4x4 atom pair-list, to 1.000 nm, buffer size 0.000 nm
 Note that mdrun will redetermine rlist based on the actual pair-list setup
 Calculating fourier grid dimensions for X Y Z
-Using a fourier grid of 25x28x24, spacing 0.159 0.152 0.150
-This run will generate roughly 0 Mb of data
+Using a fourier grid of 25x28x24, spacing 0.159 0.153 0.150
+This run will generate roughly 119 Mb of data
 
-DEBUG: 2018-01-14 18:01:48	Generating TPR file for BW replica
-                      :-) GROMACS - gmx grompp, 2016.3 (-:
+DEBUG: 2018-02-01 20:54:23	Generating TPR file for BW replica
+                  :-) GROMACS - gmx grompp, VERSION 5.1.4 (-:
 
                             GROMACS is written by:
      Emile Apol      Rossen Apostolov  Herman J.C. Berendsen    Par Bjelkmar   
- Aldert van Buuren   Rudi van Drunen     Anton Feenstra    Gerrit Groenhof  
- Christoph Junghans   Anca Hamuraru    Vincent Hindriksen Dimitrios Karkoulis
-    Peter Kasson        Jiri Kraus      Carsten Kutzner      Per Larsson    
-  Justin A. Lemkul   Magnus Lundborg   Pieter Meulenhoff    Erik Marklund   
-   Teemu Murtola       Szilard Pall       Sander Pronk      Roland Schulz   
-  Alexey Shvetsov     Michael Shirts     Alfons Sijbers     Peter Tieleman  
-  Teemu Virolainen  Christian Wennberg    Maarten Wolf   
+ Aldert van Buuren   Rudi van Drunen     Anton Feenstra   Sebastian Fritsch 
+  Gerrit Groenhof   Christoph Junghans   Anca Hamuraru    Vincent Hindriksen
+ Dimitrios Karkoulis    Peter Kasson        Jiri Kraus      Carsten Kutzner  
+    Per Larsson      Justin A. Lemkul   Magnus Lundborg   Pieter Meulenhoff 
+   Erik Marklund      Teemu Murtola       Szilard Pall       Sander Pronk   
+   Roland Schulz     Alexey Shvetsov     Michael Shirts     Alfons Sijbers  
+   Peter Tieleman    Teemu Virolainen  Christian Wennberg    Maarten Wolf   
                            and the project leaders:
         Mark Abraham, Berk Hess, Erik Lindahl, and David van der Spoel
 
 Copyright (c) 1991-2000, University of Groningen, The Netherlands.
-Copyright (c) 2001-2017, The GROMACS development team at
+Copyright (c) 2001-2015, The GROMACS development team at
 Uppsala University, Stockholm University and
 the Royal Institute of Technology, Sweden.
 check out http://www.gromacs.org for more information.
@@ -243,16 +253,15 @@ under the terms of the GNU Lesser General Public License
 as published by the Free Software Foundation; either version 2.1
 of the License, or (at your option) any later version.
 
-GROMACS:      gmx grompp, version 2016.3
-Executable:   /usr/bin/gmx
-Data prefix:  /usr
-Working dir:  /home/giulio/Dropbox/UCL/software/TS-PPTIS/TS-PPTIS/TS-PPTIS
+GROMACS:      gmx grompp, VERSION 5.1.4
+Executable:   /usr/local/gromacs/bin/gmx
+Data prefix:  /usr/local/gromacs
 Command line:
-  gmx grompp -c /home/giulio/Dropbox/UCL/software/TS-PPTIS/TS-PPTIS/testfiles/pptis10/temp/genvel_inverted.gro -f ../testfiles/md.mdp -p ../testfiles/topol.top -maxwarn 1 -o /home/giulio/Dropbox/UCL/software/TS-PPTIS/TS-PPTIS/testfiles/pptis10/temp/bw.tpr -po /home/giulio/Dropbox/UCL/software/TS-PPTIS/TS-PPTIS/testfiles/pptis10/temp/mdout.mdp
+  gmx grompp -c /home/federico/GitProjects/TS-PPTIS/testfiles/pptis10/temp/genvel_inverted.gro -f /home/federico/GitProjects/TS-PPTIS/testfiles/pptis10/temp/md.mdp -p ../testfiles/topol.top -maxwarn 1 -o /home/federico/GitProjects/TS-PPTIS/testfiles/pptis10/temp/bw.tpr -po /home/federico/GitProjects/TS-PPTIS/testfiles/pptis10/temp/mdout.mdp
 
 
-Back Off! I just backed up /home/giulio/Dropbox/UCL/software/TS-PPTIS/TS-PPTIS/testfiles/pptis10/temp/mdout.mdp to /home/giulio/Dropbox/UCL/software/TS-PPTIS/TS-PPTIS/testfiles/pptis10/temp/#mdout.mdp.2#
-Setting the LD random seed to 1759828855
+Back Off! I just backed up /home/federico/GitProjects/TS-PPTIS/testfiles/pptis10/temp/mdout.mdp to /home/federico/GitProjects/TS-PPTIS/testfiles/pptis10/temp/#mdout.mdp.2#
+Setting the LD random seed to 3449531095
 Generated 435 of the 435 non-bonded parameter combinations
 Generating 1-4 interactions: fudge = 0.5
 Generated 435 of the 435 1-4 parameter combinations
@@ -262,9 +271,9 @@ Excluding 3 bonded neighbours molecule type 'WAT'
 Removing all charge groups because cutoff-scheme=Verlet
 Number of degrees of freedom in T-Coupling group Protein is 551.86
 Number of degrees of freedom in T-Coupling group non-Protein is 11616.14
-Estimate for the relative computational load of the PME mesh part: 0.15
+Estimate for the relative computational load of the PME mesh part: 0.20
 
-GROMACS reminds you: "A robot will be truly autonomous when you instruct it to go to work and it decides to go to the beach instead." (Brad Templeton)
+gcq#60: "Would You Like to Be the Monster Tonight ?" (Captain Beefheart)
 
 turning all bonds into constraints...
 turning all bonds into constraints...
@@ -280,5 +289,5 @@ Calculated rlist for 1x1 atom pair-list as 1.035 nm, buffer size 0.035 nm
 Set rlist, assuming 4x4 atom pair-list, to 1.000 nm, buffer size 0.000 nm
 Note that mdrun will redetermine rlist based on the actual pair-list setup
 Calculating fourier grid dimensions for X Y Z
-Using a fourier grid of 25x28x24, spacing 0.159 0.152 0.150
-This run will generate roughly 0 Mb of data
+Using a fourier grid of 25x28x24, spacing 0.159 0.153 0.150
+This run will generate roughly 119 Mb of data

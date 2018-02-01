@@ -577,7 +577,7 @@ class tsAnalysis:
         self.beta = 1 / 2.479
         self.crossInfo=[]
     
-    def getCrossings(self, folderName='pptis00', rejectedName='pptis00/tps_rej.dat):
+    def getCrossings(self, folderName='pptis00', rejectedName='pptis00/tps_rej.dat'):
         """Reads par files produced by ts-pptis and extracts information on crossing events to be used by getRates.
 
         Args:
@@ -656,8 +656,6 @@ class tsAnalysis:
                 if none provided automatically assume 1 kT
             ratesFile (string, optional): path to the file containing the probabilities of
              crossing windows
-            ###REMOVED crossFile (string, optional): path to the file containing information on the
-             crossing events
             printFile (bool, optional): activate/deactivate printing to file
 
         """
@@ -743,6 +741,7 @@ def testAll():
                  '../testfiles/system.gro',
                  '../testfiles/md.mdp',
                  gmx='/usr/bin/gmx')
+#                  gmx='/usr/local/gromacs/bin/gmx')
 
     ts.initWindow('../testfiles/pptis10',
                   [0.55,1,1.25],
@@ -750,9 +749,9 @@ def testAll():
                   '../testfiles/COLVAR',
                   overwrite=True)
 
-    #ts.setUpTPS('../testfiles/pptis10')
+#    ts.setUpTPS('../testfiles/pptis10')
 
-    #ts.finalizeTPS('../testfiles/pptis10')
+#    ts.finalizeTPS('../testfiles/pptis10')
 
 if __name__ == "__main__":
 

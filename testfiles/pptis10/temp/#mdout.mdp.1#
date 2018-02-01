@@ -1,18 +1,10 @@
 ;
-;	File '/home/giulio/Dropbox/UCL/software/TS-PPTIS/TS-PPTIS/testfiles/pptis10/temp/mdout.mdp' was generated
-;	By user: giulio (1000)
-;	On host: laptop
-;	At date: Sun Jan 14 18:01:47 2018
+;	File '/home/federico/GitProjects/TS-PPTIS/testfiles/pptis10/temp/mdout.mdp' was generated
+;	By user: federico (1000)
+;	On host: alpaca
+;	At date: Thu Feb  1 20:54:19 2018
 
 ;
-;	Created by:
-;	                     :-) GROMACS - gmx grompp, 2016.3 (-:
-;	
-;	Executable:   /usr/bin/gmx
-;	Data prefix:  /usr
-;	Working dir:  /home/giulio/Dropbox/UCL/software/TS-PPTIS/TS-PPTIS/TS-PPTIS
-;	Command line:
-;	  gmx grompp -c /home/giulio/Dropbox/UCL/software/TS-PPTIS/TS-PPTIS/testfiles/pptis10/temp/frame.gro -f ./invert.mdp -p ../testfiles/topol.top -maxwarn 1 -o /home/giulio/Dropbox/UCL/software/TS-PPTIS/TS-PPTIS/testfiles/pptis10/temp/genvel.tpr -po /home/giulio/Dropbox/UCL/software/TS-PPTIS/TS-PPTIS/testfiles/pptis10/temp/mdout.mdp
 
 ; VARIOUS PREPROCESSING OPTIONS
 ; Preprocessor information: use cpp syntax.
@@ -93,6 +85,8 @@ verlet-buffer-tolerance  = 0.005
 ; nblist cut-off        
 rlist                    = 1
 ; long-range cut-off for switched potentials
+rlistlong                = -1
+nstcalclr                = -1
 
 ; OPTIONS FOR ELECTROSTATICS AND VDW
 ; Method for doing electrostatics
@@ -344,6 +338,8 @@ E-zt                     =
 ; Ion/water position swapping for computational electrophysiology setups
 ; Swap positions along direction: no, X, Y, Z
 swapcoords               = no
+
+; AdResS parameters    
 adress                   = no
 
 ; User defined thingies

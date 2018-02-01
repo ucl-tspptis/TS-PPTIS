@@ -508,15 +508,15 @@ def getWeightTraj(pathToFile, index):
         (int); weight for the selected trajectory
     """
 
-        trajFile=open(pathToFile, "r")
-        counter=0
+    trajFile=open(pathToFile, "r")
+    counter=0
 
-        for line in trajFile.readlines():
-            if str(index) in line:
-                counter+=1
-        trajFile.close()
+    for line in trajFile.readlines():
+        if str(index) in line:
+            counter+=1
+    trajFile.close()
 
-        return counter+1 #not sure why +1, double check!
+    return counter+1 #not sure why +1, double check!
 
 
 def analyzeCross(fileName, target):

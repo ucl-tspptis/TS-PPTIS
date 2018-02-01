@@ -1,18 +1,10 @@
 ;
-;	File '/home/giulio/Dropbox/UCL/software/TS-PPTIS/TS-PPTIS/testfiles/pptis10/temp/mdout.mdp' was generated
-;	By user: giulio (1000)
-;	On host: laptop
-;	At date: Sun Jan 14 18:01:48 2018
+;	File '/home/federico/GitProjects/TS-PPTIS/testfiles/pptis10/temp/mdout.mdp' was generated
+;	By user: federico (1000)
+;	On host: alpaca
+;	At date: Thu Feb  1 20:54:22 2018
 
 ;
-;	Created by:
-;	                     :-) GROMACS - gmx grompp, 2016.3 (-:
-;	
-;	Executable:   /usr/bin/gmx
-;	Data prefix:  /usr
-;	Working dir:  /home/giulio/Dropbox/UCL/software/TS-PPTIS/TS-PPTIS/TS-PPTIS
-;	Command line:
-;	  gmx grompp -c /home/giulio/Dropbox/UCL/software/TS-PPTIS/TS-PPTIS/testfiles/pptis10/temp/genvel.gro -f ../testfiles/md.mdp -p ../testfiles/topol.top -maxwarn 1 -o /home/giulio/Dropbox/UCL/software/TS-PPTIS/TS-PPTIS/testfiles/pptis10/temp/fw.tpr -po /home/giulio/Dropbox/UCL/software/TS-PPTIS/TS-PPTIS/testfiles/pptis10/temp/mdout.mdp
 
 ; VARIOUS PREPROCESSING OPTIONS
 ; Preprocessor information: use cpp syntax.
@@ -26,7 +18,7 @@ integrator               = md
 ; Start time and timestep in ps
 tinit                    = 0
 dt                       = 0.002
-nsteps                   = -1
+nsteps                   = 1836392
 ; For exact run continuation or redoing part of a run
 init-step                = 0
 ; Part index is updated automatically on checkpointing (keeps files separate)
@@ -60,15 +52,15 @@ rtpi                     = 0.05
 
 ; OUTPUT CONTROL OPTIONS
 ; Output frequency for coords (x), velocities (v) and forces (f)
-nstxout                  = 500
-nstvout                  = 500
+nstxout                  = 0
+nstvout                  = 0
 nstfout                  = 0
 ; Output frequency for energies to log file and energy file
 nstlog                   = 500
 nstcalcenergy            = 100
-nstenergy                = 500
+nstenergy                = 1000
 ; Output frequency and precision for .xtc file
-nstxout-compressed       = 0
+nstxout-compressed       = 500
 compressed-x-precision   = 1000
 ; This selects the subset of atoms for the compressed
 ; trajectory file. You can select multiple groups. By
@@ -93,6 +85,8 @@ verlet-buffer-tolerance  = 0.005
 ; nblist cut-off        
 rlist                    = 1
 ; long-range cut-off for switched potentials
+rlistlong                = -1
+nstcalclr                = -1
 
 ; OPTIONS FOR ELECTROSTATICS AND VDW
 ; Method for doing electrostatics
@@ -344,6 +338,8 @@ E-zt                     =
 ; Ion/water position swapping for computational electrophysiology setups
 ; Swap positions along direction: no, X, Y, Z
 swapcoords               = no
+
+; AdResS parameters    
 adress                   = no
 
 ; User defined thingies
