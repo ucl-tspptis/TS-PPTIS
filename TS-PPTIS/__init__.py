@@ -557,33 +557,120 @@ class tsAnalysis:
     from a set of gromacs simulations.
     """
 
-    def __init__(self, units='kJ/mol'):
+    def __init__(self, units='kJ/mol', folderName='../testfiles/'):
         """Initialise the analysis.
 
         Args:
 
-            ...
-
             units (string, optional): energy units of the input free energy
+            folderName (string, optional): path to the folder containing the
+                pptis output directories
 
         """
 
-        # FC: I guess here we will load anything that's needed to calculate
-        # rates etc... (e.g. trajectories)
+        #TODO: add some output text to keep the user informed...
 
         if units not in ['kJ/mol', 'kcal/mol', 'kT']:
             print 'Warning:  unrecognised energy units, assuming kJ/mol'
 
         self.beta = 1 / 2.479
         self.crossInfo=[]
-    
-    def getCrossings(self, folderName='../testfiles/' ):
-        """Reads par files produced by ts-pptis and extracts information on crossing events to be used by getRates.
+        self.probInfo=[]
+
+        self.pathToFiles=folderName
+
+
+    def getProbabilities(self, folderName=''):
+        """Reads par files produced by ts-pptis and extracts information on crossing 
+        probabilities to be used by getRates.
 
         Args:
 
-            ...
-            
+            folderName (string, optional): path to the directory containing the pptis 
+                windows subdirectories
+        
+        """
+        # WARNING: UNTESTED
+
+        if folderName=='': folderName=self.pathToFiles
+
+        output=open(folderName+'/probabilities.dat', 'w')
+        #TODO: add header to file
+
+        listFold=[]
+        for fold in [x[0] for x in os.walk(folderName)]:
+            if fold.startswith('pptis'):
+                listFold.append(fold)
+
+        for window in listFold:
+            target=getLambda(folderName+window)
+
+           # nAcc=getNumRows(folderName+window+'/tps_acc.log')
+           # nRej=getNumRows(folderName+window+'/tps_rej.log')
+
+            tAcc,tRej,iState,fState=[],[],[],[]
+            dRej,dState={},{}
+
+            dataAcc=open(folderName+window+'/tps_acc.log','r')
+            for line in dataAcc:
+                #not really needed, I'm going to leave them for now
+                tAcc.append(np.int(line[0]))
+                iState.append(line[5])
+                fState.append(line[6])
+           
+                #not sure about this dictionary
+                if line[5]+line[6] not in dState:
+                    dState[line[5]+line[6]]=0
+                dState[line[5]+line[6]]+=1
+                #there's a statement in Giorgio's scripts about weights 
+                #on these variables, but it seems to be avoided through
+                #a "next" in the loop... check it out!
+            dataAcc.close()
+
+            dataRej=open(folderName+window+'/tps_rej.log','r')
+            for line in dataRej:
+                #not really needed, I'm going to leave it for now
+                tRej.append(np.int(line[0]))
+
+                #not sure about this dictionary
+                if np.int(line[0]) not in dRej:
+                    dRej[np.int(line[0])]=0
+                dRej[np.int(line[0])]+=1
+
+            dataRej.close()
+
+            if dState['AB']==0 or dState['AA']==0:
+                #not sure why the second condition is necessary...
+                ppm='inf'
+                pmm='inf'
+            else:
+                ppm=dState['AB']*1.0/(dState['AB']+dState['AA'])
+                pmm=1-ppm
+
+
+            if dState['BA']==0 or dState['BB']==0:
+                #not sure why the second condition is necessary...
+                pmp='inf'
+                ppp='inf'
+            else:
+                pmp=dState['BA']*1.0/(dState['BA']+dState['BB'])
+                ppp=1-pmp
+
+
+            output.write('{:s}'.format(window)+'\t'+'{:.2f}'.format(target)+'\t'+\
+               '{:.2f}'.format(pmm)+'\t'+'{:.2f}'.format(ppm)+'\t'+'{:.2f}'.format(pmp)+'\t'+'{:.2f}'.format(ppp)+'\n')
+            self.probInfo.append([target,pmm,ppm,pmp,ppp]) 
+
+        output.close()
+
+
+
+    def getCrossings(self, tsLambda, folderName=''):
+        """Reads par files produced by ts-pptis and extracts information on crossing events         at the TS to be used by getRates.
+
+        Args:
+
+            tsLambda (float): value of the window at the TS
             folderName (string, optional): path to the directory containing the pptis 
                 windows subdirectories
         
@@ -591,10 +678,13 @@ class tsAnalysis:
 
         # FC: for the moment being, this function reads par files as in Giorgio's implementation
         # it will need to be adapted to read from our new output format.
-        # another issue is that it appends the data from all windows to one single file
-        # (self.crossInfo), I'm not sure how to manage this. 
 
         # WARNING: UNTESTED
+
+        if folderName=='': folderName=self.pathToFiles
+        
+        output=open(folderName+'/crossings.dat', 'w')                
+        #TODO: add header to file
 
         listFold=[]
         for fold in [x[0] for x in os.walk(folderName)]:
@@ -602,13 +692,10 @@ class tsAnalysis:
                 listFold.append(fold)
 
         for window in listFold:
-        ###find the value of lambda0, for the moment old plumed format, alternatively we can implement it as input
-            plumed=open(folderName+window+'/plumed.dat',"r")
-            for line in plumed.readlines():
-                if line[0]!='TIS':
-                    target=np.float(line[-1])
-                    break
-            plumed.close()	   
+            target=getLambda(folderName+window)
+            
+            #keep going only if lambda is at the TS
+            if target!=tsLambda: continue
 
             pp,pm = 0,0
             velSum, weightsSum = 0,0 #needed only for logging if we decide to keep it
@@ -620,8 +707,6 @@ class tsAnalysis:
                     listPar.append(fi)
             listSorted=sorted(listPar, key=natural_keys)
 
-            #the output will be saved in a dictionary, but we can keep this as a logfile
-            output=open(folderName+window+'/crossings.dat', 'w')                
             for fi in listSorted:
                 crossData = analyzeCross(folderName+window+'/tps_data/'+fi, target) #see tools
                 pp += crossData['p0p']
@@ -637,8 +722,11 @@ class tsAnalysis:
                 self.crossInfo.append([fi[:4],crossData['vel'],crossData['nrPos'],crossData['nrNeg'],weight,crossData['end']]) #a bit redundant at the moment
             output.close()
 
+            #no need to check the other folders if we got to this point  
+            break
+
     
-    def getRates(self, fes, Astate=-1, Bstate=-1, Acorr=0, Bcorr=0, indexTS=None, error=None, ratesFile='rates.dat', printFile=False):
+    def getRates(self, fes, Astate=-1, Bstate=-1, Acorr=0, Bcorr=0, indexTS=None, error=None, printFile=False):
         """Reads the free energy surface FES, TS-PPTIS crossing probabilities
         and ouputs, calculate the rate constants and print them to screen and/or to file.
 
@@ -659,8 +747,6 @@ class tsAnalysis:
                 if none provided automatically look for the highest point in the FES
             error (float, optional): free energy error to calculate the rates range,
                 if none provided automatically assume 1 kT
-            ratesFile (string, optional): path to the file containing the probabilities of
-             crossing windows
             printFile (bool, optional): activate/deactivate printing to file
 
         """
@@ -708,7 +794,7 @@ class tsAnalysis:
         PBlow = np.exp(-beta * (offFES[TS] + Bcorr - error)) / norm
         PBupp = np.exp(-beta * (offFES[TS] + Bcorr + error)) / norm
 
-        R = calcR(fes[0][iTS], ratesFile=ratesFile, crossInfo=self.crossInfo)
+        R = calcR(fes[0][iTS], ratesInfo=self.ratesInfo, crossInfo=self.crossInfo)
 
         kAB = PA * R * 1e12
         kABlow = PAlow * R * 1e12
@@ -718,10 +804,10 @@ class tsAnalysis:
         kBAlow = PBlow * R * 1e12
         kBAupp = PBupp * R * 1e12
 
-        # FIX ALL THIS PRINTING
+        # FIX ALL THIS PRINTING, the folder etc...
         # Add also the times tau...
         if printFile == True:
-            f = open('RatesOutput.dat', 'w')
+            f = open(self.pathToFiles+'RatesOutput.dat', 'w')
             f.write("Rates in s^-1")
             f.write("%.3e" % kAB, "%.3e" % kBA)
             f.write("\nRates low")
@@ -742,11 +828,11 @@ def testAll():
     """ Runs a standard set of commands to test the correct functioning of TS-PPTIS. """
 
     # Test initialisation
-    ts = tsSetup('../testfiles/topol.top',
-                 '../testfiles/system.gro',
-                 '../testfiles/md.mdp',
-#                 gmx='/usr/bin/gmx')
-                  gmx='/usr/local/gromacs/bin/gmx')
+#    ts = tsSetup('../testfiles/topol.top',
+#                 '../testfiles/system.gro',
+#                 '../testfiles/md.mdp',
+##                 gmx='/usr/bin/gmx')
+#                  gmx='/usr/local/gromacs/bin/gmx')
 
 #    ts.initWindow('../testfiles/pptis10',
 #                  [0.55,1,1.25],
@@ -756,7 +842,13 @@ def testAll():
 
 #    ts.setUpTPS('../testfiles/pptis10')
 
-    ts.finalizeTPS('../testfiles/pptis10')
+#    ts.finalizeTPS('../testfiles/pptis10')
+
+    tsa = tsAnalysis()
+     
+    tsa.getProbabilities()
+#    tsa.getCrossings() #need TS
+#    tsa.getRates(...) ##need fes, TS etc...
 
 if __name__ == "__main__":
 

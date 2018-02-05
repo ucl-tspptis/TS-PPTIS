@@ -23,11 +23,30 @@ import datetime
 cwd = os.getcwd()
 
 
+def getNumRows(nameFile):
+    """Count the number of rows in a file. Returns 0 if the file does not exist.
+
+    Args:
+        nameFile (string): path to  text file 
+
+    Returns:
+        nrows (int) number of rows in the file
+    """
+    
+    try:
+        data = open(nameFile, 'r')
+        nrows=len(data.readlines())
+    except:
+        nrows=0
+    
+    return nrows
+
+
 def parseWindows(nameFile):
     """Parse a text file containing information on the TS-PPTIS windows.
 
     Args:
-        windows (string): path to  text file containing information
+        nameFile (string): path to  text file containing information
         on the windows in the format left:center:right
 
     Returns:
@@ -495,6 +514,22 @@ def setTmax(mdpFile, tmax, timestep):
 
 ###### In the following are the analysis tools, remove this line when done####
 
+def getLambda(pathToFile):
+    """Extracts the lambda value of a window from the window.cfg file in its 
+    pptis output folder.
+        
+    Args:
+        pathToFile (string): path to the folder containing th window.cfg file
+
+    Returns:
+        (float): the value of the central window
+    """
+
+    winFile=open(pathToFile+'/window.cfg',"r")
+    for line in winFile.readlines():
+        if line[0]=='interfaces':
+            return np.float(line[-1].split(':')[1])
+
 
 def getWeightTraj(pathToFile, index):
     """Extracts the weights from the rejected trajectory file, to be used
@@ -505,7 +540,7 @@ def getWeightTraj(pathToFile, index):
         index (string or int): trajectory index from which to count the weights
 
     Returns:
-        (int); weight for the selected trajectory
+        (int): weight for the selected trajectory
     """
 
     trajFile=open(pathToFile, "r")
@@ -602,41 +637,32 @@ def analyzeCross(fileName, target):
     return info
 
 
-def calcR(posTS, crossInfo, ratesFile='rates.dat', debug=False):
+def calcR(posTS, crossInfo, probInfo, debug=False):
     """ Calculates the R component of the rate constants with an iterative approach
     described by Juraszek et al. 2013
 
     Args:
         posTS (int): position of the Transition State along the path X-axis
-        crossInfo (list, mixed): list containing information on the crossing events
-        ratesFile (string, optional): path to the file containing the probabilities of
-            crossing windows
-        ### REMOVED crossFile (string, optional): path to the file containing information on the
-            crossing events
+        crossInfo (list, mixed): list containing information on the crossing 
+            events on the TS
+        probInfo (list, mixed): list containing information on the crossing 
+            probabilities for each window events
         debug (bool, optional): activate/deactivate the debug option
 
     Returns:
         R (float): final approximated value of R, if debug option is activated, returns
             vector with the value at each iteration
     """
-    # NOTE FC: This implementation HEAVILY relies on files as formatted by Giorgio's script
-    # it should be adequately adapted if we decide to output that information in a different
-    # format
 
-    data=readFile(ratesFile)
     lambdas, pmm, pmp, ppm, ppp=[], [], [], [], []
-    numWindows=len(data)
+    numWindows=len(probInfo)
 
-    for line in data:
-        if len(line) > 23:
-            off=1
-        else:
-            off=0
-        lambdas.append(float(line[2]))
-        pmm.append(float(line[11 + off]))
-        pmp.append(float(line[12 + off]))
-        ppm.append(float(line[13 + off]))
-        ppp.append(float(line[14 + off]))
+    for line in probInfo:
+        lambdas.append(float(line[0]))
+        pmm.append(float(line[1]))
+        pmp.append(float(line[2]))
+        ppm.append(float(line[3]))
+        ppp.append(float(line[4]))
 
     vel, we, pc, nc, ends=[], [], [], [], []
 
