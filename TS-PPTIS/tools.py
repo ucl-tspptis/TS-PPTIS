@@ -23,11 +23,30 @@ import datetime
 cwd = os.getcwd()
 
 
+def getNumRows(nameFile):
+    """Count the number of rows in a file. Returns 0 if the file does not exist.
+
+    Args:
+        nameFile (string): path to  text file 
+
+    Returns:
+        nrows (int) number of rows in the file
+    """
+    
+    try:
+        data = open(nameFile, 'r')
+        nrows=len(data.readlines())
+    except:
+        nrows=0
+    
+    return nrows
+
+
 def parseWindows(nameFile):
     """Parse a text file containing information on the TS-PPTIS windows.
 
     Args:
-        windows (string): path to  text file containing information
+        nameFile (string): path to  text file containing information
         on the windows in the format left:center:right
 
     Returns:
@@ -330,12 +349,10 @@ def tpsAccEntry(logFile, runNumber, trajLen, startingPoint, startingSide, bwAB, 
         netCross (int): net number of crossings (rightCross - leftCross)
 
     """
-    header = not os.path.isfile(logFile)
-    with open(logFile, 'a+') as handle:
-        if header:    
-            # If file does not exist write header
+    header = not os.path.isfile(logFile) # whether to write header
+    with open(logFile, 'a') as handle:
+        if header:
             handle.write('# RUN_NUM LENGTH START_CV SIDE BW_END FW_END +CROSS -CROSS TOT_CROSS NET_CROSS\n')
-
         handle.write('{:10d} {:10d} {:10.3f} {:5d} {:>5s} {:>5s} {:5d} {:5d} {:5d} {:5d}\n'.format(
             runNumber,
             trajLen,
@@ -366,8 +383,7 @@ def parseTpsAcc(logFile):
               (69,74))
     parsed = []
 
-    # Ignore header
-    for entry in tpsAcc[1:]:
+    for entry in tpsAcc[1:]:   # ignore header
         line = []
 
         for s in slices:
@@ -501,6 +517,22 @@ def setTmax(mdpFile, tmax, timestep):
 
 ###### In the following are the analysis tools, remove this line when done####
 
+def getLambda(pathToFile):
+    """Extracts the lambda value of a window from the window.cfg file in its 
+    pptis output folder.
+        
+    Args:
+        pathToFile (string): path to the folder containing th window.cfg file
+
+    Returns:
+        (float): the value of the central window
+    """
+
+    winFile=open(pathToFile+'/window.cfg',"r")
+    for line in winFile.readlines():
+        if line[0]=='interfaces':
+            return np.float(line[-1].split(':')[1])
+
 
 def getWeightTraj(pathToFile, index):
     """Extracts the weights from the rejected trajectory file, to be used
@@ -511,7 +543,7 @@ def getWeightTraj(pathToFile, index):
         index (string or int): trajectory index from which to count the weights
 
     Returns:
-        (int); weight for the selected trajectory
+        (int): weight for the selected trajectory
     """
 
     trajFile=open(pathToFile, "r")
@@ -541,16 +573,24 @@ def analyzeCross(fileName, target):
 
     #Note FC: we need to decide if and what we want to log.
 
-    cv=[]
+    cv,vel,crEvent,side=[],[],[],[]
+    
     data = open(fileName,"r")
     for line in data.readlines():
         if line[0]!='#':
-            cv.append(np.float(line.split()[1]))
+            read=line.split()
+            cv.append(np.float(read[1])) #not needed
+            crEvent.append(np.int(read[4]))
+            side.append(np.int(read[3]))
+            if len(read)>5:
+                vel.append(np.float(read[-1]))
     data.close()
  
     vlist = []  #only for logging purposes
     cross = False    
 
+
+######### Old version, please remove
     n = 0
     average = 0
     p0p,p0m = 0,0
@@ -584,65 +624,61 @@ def analyzeCross(fileName, target):
                 posCross += 1
             elif direction<0:
                 negCross += 1
-            
+           
         if cv[i] >= target+1: #why + and - 1???
             end = '+'
         elif cv[i] <= target-1:
             end = '-'
+#########################################
 
-    if n > 0:
-        average = average / n
-    else: average = 0 
+
+    if len(vel) > 0:
+        avrVel=np.mean(vel)
+    else: avrVel = 0 
 
     if p0p>1: p0p=1
     if p0m>1: p0m=1
        
     info={}
-    info['vel']=average
+    info['vel']=avrVel
     info['p0p']=p0p #only for logging
     info['p0m']=p0m #only for logging
-    info['nrPos']=posCross
-    info['nrNeg']=negCross
-    info['end']=end
+    info['nrPos']=np.sum([1 if c>0 else 0 for c in crEvent])
+    info['nrNeg']=np.sum([1 if c<0 else 0 for c in crEvent])
+    if side[-1]>0:
+        info['end']='+'   #we can cange this to a smarter 0/1 later
+    else:
+        info['end']='-'
         
     return info
 
 
-def calcR(posTS, crossInfo, ratesFile='rates.dat', debug=False):
+def calcR(posTS, crossInfo, probInfo, debug=False):
     """ Calculates the R component of the rate constants with an iterative approach
     described by Juraszek et al. 2013
 
     Args:
         posTS (int): position of the Transition State along the path X-axis
-        crossInfo (list, mixed): list containing information on the crossing events
-        ratesFile (string, optional): path to the file containing the probabilities of
-            crossing windows
-        ### REMOVED crossFile (string, optional): path to the file containing information on the
-            crossing events
+        crossInfo (list, mixed): list containing information on the crossing 
+            events on the TS
+        probInfo (list, mixed): list containing information on the crossing 
+            probabilities for each window events
         debug (bool, optional): activate/deactivate the debug option
 
     Returns:
         R (float): final approximated value of R, if debug option is activated, returns
             vector with the value at each iteration
     """
-    # NOTE FC: This implementation HEAVILY relies on files as formatted by Giorgio's script
-    # it should be adequately adapted if we decide to output that information in a different
-    # format
 
-    data=readFile(ratesFile)
     lambdas, pmm, pmp, ppm, ppp=[], [], [], [], []
-    numWindows=len(data)
+    numWindows=len(probInfo)
 
-    for line in data:
-        if len(line) > 23:
-            off=1
-        else:
-            off=0
-        lambdas.append(float(line[2]))
-        pmm.append(float(line[11 + off]))
-        pmp.append(float(line[12 + off]))
-        ppm.append(float(line[13 + off]))
-        ppp.append(float(line[14 + off]))
+    for line in probInfo:
+        lambdas.append(float(line[0]))
+        pmm.append(float(line[1]))
+        pmp.append(float(line[2]))
+        ppm.append(float(line[3]))
+        ppp.append(float(line[4]))
 
     vel, we, pc, nc, ends=[], [], [], [], []
 
