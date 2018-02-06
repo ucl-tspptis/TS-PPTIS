@@ -103,7 +103,7 @@ class tsSetup:
         if os.path.isfile(traj):
             self.traj = traj
             self.trajData = md.load(traj, top=self.gro)
-            print 'Trajectory_file:\t\tOK'
+            print 'Trajectory file:\t\tOK'
         else:
             sys.exit('Trajectory file not found: '+ traj)
 
@@ -111,6 +111,7 @@ class tsSetup:
         if os.path.isfile(colvar):
             self.colvar = colvar
             print 'COLVAR file:\t\t\tOK'
+            trajColvar = parseTxt(colvar)
         else:
             sys.exit('COLVAR file not found: ' + colvar)
         # Check length of interface list
@@ -149,10 +150,10 @@ class tsSetup:
             window[0])).replace('__UL__', str(window[2]))
 
         with open(path + 'run/plumed_fw.dat', 'w') as handle:
-            handle.write(committorText.replace('__COLVAR__', path+'run/COLVAR_FW'))
+            handle.write(committorText.replace('__COLVAR__', pathTree['run'] + 'COLVAR_FW'))
 
         with open(path + 'run/plumed_bw.dat', 'w') as handle:
-            handle.write(committorText.replace('__COLVAR__', path+'run/COLVAR_BW'))
+            handle.write(committorText.replace('__COLVAR__', pathTree['run'] + 'COLVAR_BW'))
 
 
         # Determine XTC, TRR and COLVAR stride and timestep. WIll be written in window.cfg
@@ -182,9 +183,9 @@ class tsSetup:
         elif not 'timestep' in config:
             sys.exit('Timestep not found in ' + self.mdp)
         elif not 'colvar_stride' in config:
-            sys.exit('COLVAR stride not found in ' + path+'run/plumed_bw.dat')
+            sys.exit('COLVAR stride not found in ' + pathTree['run'] + 'plumed_bw.dat')
 
-        print 'TRR stride:\t\t\t',config['xtc_stride']
+        print 'XTC stride:\t\t\t',config['xtc_stride']
         print 'COLVAR stride:\t\t\t', config['colvar_stride']
 
         # Initialize a config file. Can be useful for storing paths and
@@ -197,7 +198,7 @@ class tsSetup:
             handle.write(initText)
 
         # Update 17/01/18: structure differs.
-        tpsAccEntry(path+'tps_acc.log', 0, len(self.trajData), 0, 0, 'A', 'B', 0, 0, 0, 0)
+        tpsAccEntry(path+'tps_acc.log', 0, len(self.trajData), trajColvar[0,1], 0, 'A', 'B', 0, 0, 0, 0)
 
         # Hint at gromacs command for running the dynamics
 
@@ -547,7 +548,8 @@ class tsSetup:
                         np.sum(crossCount), crossCount[0] - crossCount[1])
 
             # write trajectory info file
-            with open(pathTree['data'] + 'rej_%05d.info' % runNumber, 'w') as handle:
+            # mutiple rejected trajectories are appended to the same file
+            with open(pathTree['data'] + 'rej_%05d.info' % runNumber, 'a') as handle:
                 handle.write(tpsInfo)
 
 class tsAnalysis:
@@ -828,17 +830,17 @@ def testAll():
     """ Runs a standard set of commands to test the correct functioning of TS-PPTIS. """
 
     # Test initialisation
-#    ts = tsSetup('../testfiles/topol.top',
-#                 '../testfiles/system.gro',
-#                 '../testfiles/md.mdp',
-##                 gmx='/usr/bin/gmx')
+    ts = tsSetup('../testfiles/topol.top',
+                 '../testfiles/system.gro',
+                 '../testfiles/md.mdp',
+                  gmx='/usr/bin/gmx')
 #                  gmx='/usr/local/gromacs/bin/gmx')
 
-#    ts.initWindow('../testfiles/pptis10',
-#                  [0.55,1,1.25],
-#                  '../testfiles/traj_fixed.xtc',
-#                  '../testfiles/COLVAR',
-#                  overwrite=True)
+    ts.initWindow('../testfiles/pptis10',
+                  [0.75,1,1.25],
+                  '../testfiles/traj_fixed.xtc',
+                  '../testfiles/COLVAR',
+                  overwrite=True)
 
 #    ts.setUpTPS('../testfiles/pptis10')
 
