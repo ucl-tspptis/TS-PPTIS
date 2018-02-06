@@ -570,16 +570,24 @@ def analyzeCross(fileName, target):
 
     #Note FC: we need to decide if and what we want to log.
 
-    cv=[]
+    cv,vel,crEvent,side=[],[],[],[]
+    
     data = open(fileName,"r")
     for line in data.readlines():
         if line[0]!='#':
-            cv.append(np.float(line.split()[1]))
+            read=line.split()
+            cv.append(np.float(read[1])) #not needed
+            crEvent.append(np.int(read[4])
+            side.append(np.int(read[3])
+            if len(read)>5:
+                vel.append(np.float(read[-1]))
     data.close()
  
     vlist = []  #only for logging purposes
     cross = False    
 
+
+######### Old version, please remove
     n = 0
     average = 0
     p0p,p0m = 0,0
@@ -613,26 +621,31 @@ def analyzeCross(fileName, target):
                 posCross += 1
             elif direction<0:
                 negCross += 1
-            
+           
         if cv[i] >= target+1: #why + and - 1???
             end = '+'
         elif cv[i] <= target-1:
             end = '-'
+#########################################
 
-    if n > 0:
-        average = average / n
-    else: average = 0 
+
+    if len(vel) > 0:
+        avrVel=np.mean(vel)
+    else: avrVel = 0 
 
     if p0p>1: p0p=1
     if p0m>1: p0m=1
        
     info={}
-    info['vel']=average
+    info['vel']=avrVel
     info['p0p']=p0p #only for logging
     info['p0m']=p0m #only for logging
-    info['nrPos']=posCross
-    info['nrNeg']=negCross
-    info['end']=end
+    info['nrPos']=np.sum([1 if c>0 else 0 for c in crEvent])
+    info['nrNeg']=np.sum([1 if c<0 else 0 for c in crEvent])
+    if side[-1]>0:
+        info['end']='+'   #we can cange this to a smarter 0/1 later
+    else:
+        info['end']='-'
         
     return info
 

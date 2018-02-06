@@ -702,24 +702,24 @@ class tsAnalysis:
 
             #load the par files, to be adapted 
             listPar=[]
-            for fi in os.listdir(folderName+window++'/tps_data/'):
-                if fi.endswith(".par"):
+            for fi in os.listdir(folderName+window+'/data/'):
+                if fi.endswith(".info"):
                     listPar.append(fi)
             listSorted=sorted(listPar, key=natural_keys)
 
             for fi in listSorted:
-                crossData = analyzeCross(folderName+window+'/tps_data/'+fi, target) #see tools
-                pp += crossData['p0p']
-                pm += crossData['p0m']  
+                crossData = analyzeCross(folderName+window+'/data/'+fi, target) #see tools
+                pp += crossData['p0p']  #not needed?
+                pm += crossData['p0m']  #not needed?
                 weight = getWeightTraj(folderName+window+'/tps_rej.log', fi[:4]) #see tools
-                velSum += crossData['vel']*weight
-                weightsSum += weight
+                velSum += crossData['vel']*weight #not needed?
+                weightsSum += weight #not needed?
         
             #LOGGING and OUTPUTTING...                
-            if crossData['vel'] > 0:    #but why only positive vel? 
-                output.write('{:s}'.format(fi[:4]) +'\t'+ '{:.4f}'.format(crossData['vel'])+'\t' + '{:d}'.format(crossData['nrPos']) + '\t' +\
+                if crossData['vel'] > 0:    #but why only positive vel? 
+                    output.write('{:s}'.format(fi[:4]) +'\t'+ '{:.4f}'.format(crossData['vel'])+'\t' + '{:d}'.format(crossData['nrPos']) + '\t' +\
                     '{:d}'.format(crossData['nrNeg']) + '\t' +'{:d}'.format(weight)+ '\t' +crossData['end'] +'\n')  
-                self.crossInfo.append([fi[:4],crossData['vel'],crossData['nrPos'],crossData['nrNeg'],weight,crossData['end']]) #a bit redundant at the moment
+                    self.crossInfo.append([fi[:4],crossData['vel'],crossData['nrPos'],crossData['nrNeg'],weight,crossData['end']]) #a bit redundant at the moment
             output.close()
 
             #no need to check the other folders if we got to this point  
