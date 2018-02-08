@@ -25,6 +25,9 @@ import matplotlib.pyplot as plt
 import mdtraj as md
 from tools import *
 
+moduleDir = os.path.dirname(os.path.abspath(__file__))
+dataDir = moduleDir + '/data/'
+
 
 class tsSetup:
     """ Standard TS-PPTIS setup class. """
@@ -155,11 +158,9 @@ class tsSetup:
 
         # 1. Copy the plumed config file from the script directory to the
         # window directory.
-        # *** WILL PROBABLY BREAK IF TS-PPTIS IS LOADED AS A LIBRARY FROM
-        # A DIFFERENT WORKING DIRECTORY ***
         # 2. Replace placeholders with window limits
 
-        with open('plumed.dat', 'r') as handle:
+        with open(dataDir + 'plumed.dat', 'r') as handle:
             committorText = handle.read()
 
         committorText = committorText.replace('__LL__', str(
@@ -345,7 +346,7 @@ class tsSetup:
 
         # Generate tpr for velocity generation
         cmd = '%s grompp -c %s -f %s -p %s -maxwarn 1 -o %s -po %s' % (
-            self.gmx, path + 'temp/frame.gro', './invert.mdp',
+            self.gmx, path + 'temp/frame.gro', dataDir + 'invert.mdp',
             self.top, path + 'temp/genvel.tpr', path + 'temp/mdout.mdp')
 
         # Generate 1 timestep tpr
@@ -892,7 +893,7 @@ def testAll():
                   '../testfiles/COLVAR',
                   overwrite=True)
 
-#    ts.setUpTPS('../testfiles/pptis10')
+    ts.setUpTPS('../testfiles/pptis10')
 
 #    ts.finalizeTPS('../testfiles/pptis10')
 
