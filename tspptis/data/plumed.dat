@@ -1,0 +1,19 @@
+# Stop simulation when a basin is reached.
+# Placeholders are replaced when initialising the window.
+# The config script is copied to the run/ window folder.
+
+# The user must define a CV with label "cv"
+
+cv: DISTANCE ATOMS=17,263 # 0.629724
+
+COMMITTOR ...
+  ARG=cv
+  STRIDE=500
+  BASIN_LL1=-999
+  BASIN_UL1=__LL__
+
+  BASIN_LL2=__UL__
+  BASIN_UL2=999
+... COMMITTOR
+
+PRINT ARG=* STRIDE=500 FILE=__COLVAR__
