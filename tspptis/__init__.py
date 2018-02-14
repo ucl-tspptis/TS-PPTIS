@@ -455,8 +455,17 @@ class tsSetup:
 
         # Inverting BW replica and joining trajectories...
         # Follow the TSPPTIS 1 convention of getting frame 0 from the FW replica
-        replTraj = [md.load(pathTree['run'] + 'bw' + trajExt, top=self.gro)[:0:-1],
-                    md.load(pathTree['run'] + 'fw' + trajExt, top=self.gro)]  # *** CHANGE WITH TRAJFILE NAME ***
+
+        # Load the individual trajectories first and check that the length is > 0
+        bwTraj, fwTraj = [md.load(pathTree['run'] + 'bw' + trajExt, top=self.gro),
+                         md.load(pathTree['run'] + 'fw' + trajExt, top=self.gro)]
+
+        if len(bwTraj) == 0 or len(fwTray) == 0: sys.exit('Length of one of trajectories is 0')
+
+        replTraj = [bwTraj[:0:-1], fwTraj]
+
+        del(bwTraj)
+        del(fwTraj)
 
 
         endPoint = []

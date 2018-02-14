@@ -80,7 +80,10 @@ def parseTxt(colvar):
     outList = np.loadtxt(colvar)  # switched to np.loadtxt. More flexible
 
     # Remove duplicate timesteps UNTESTED!
-    u, uIndeces = np.unique([l[0] for l in outList], return_index=True)
+    if len(outList.shape) > 1: # Avoid error if outList has 1 row
+        u, uIndeces = np.unique(outList[:,0], return_index=True)
+    else:
+        uIndeces = 0
 
     return outList[uIndeces]
 
