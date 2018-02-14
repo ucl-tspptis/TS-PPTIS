@@ -460,7 +460,7 @@ class tsSetup:
         bwTraj, fwTraj = [md.load(pathTree['run'] + 'bw' + trajExt, top=self.gro),
                          md.load(pathTree['run'] + 'fw' + trajExt, top=self.gro)]
 
-        if len(bwTraj) == 0 or len(fwTray) == 0: sys.exit('Length of one of trajectories is 0')
+        if len(bwTraj) == 0 or len(fwTraj) == 0: sys.exit('Length of one of trajectories is 0')
 
         replTraj = [bwTraj[:0:-1], fwTraj]
 
