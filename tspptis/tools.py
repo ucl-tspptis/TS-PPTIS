@@ -227,38 +227,6 @@ def extractFrame(cvValue, trajFile, topFile, colvarFile, outFile='out.pdb', traj
     return frames, framesCV
 
 
-# May not be useful since the LPF can be conveyed using negative time
-# for the BW replica in the colvar file.
-
-#def generatePar(colvarFile, parFile, direction=''):
-#    """Generate and save a PAR file starting from a COLVAR file or COLVAR data
-#
-#    Args:
-#        colvarFile (string/iterable): COLVAR file name or nested list
-#        parFile (string): output PAR file name
-#        direction (list): list of directions for each frame.
-#            If not provided FW direction is assumed.
-#
-#    """
-#    if type(colvarFile) == str:
-#        colvar = parseTxt(colvarFile)
-#    else:
-#        colvar = colvarFile
-#
-#    # If directions not provided assume FW direction
-#    if len(direction) == 0:
-#        direction = [1] * len(colvar)
-#    elif len(direction) != len(colvar):
-#        sys.exit("COLVAR length and direction list do not have the same length")
-#
-#    # Write PAR
-#    with open(parFile, 'w') as handle:
-#        for i in range(0, len(colvar)):
-#            handle.write(
-#                    '    '.join(
-#                        map(str, colvar[i]) + [str(int(direction[i]))]) + '\n')
-
-
 def shootingPoint(colvarFile, interfaces):
     """ Define shooting point picking random CV value in the window range
     and extracting the closest frame in the CV space using the colvar file
@@ -293,10 +261,22 @@ def sectionDelimiter(title, size=80, char='-'):
     title = '[ ' + title + ' ]'
     titleLen = len(title)
     now = timestamp()
-    if len(title) > size - len(now) - 1:
-        sys.exit('Title too long')
 
     return '\n' + char * int(np.floor((size - titleLen) / 2)) + title + char * int(np.ceil((size - titleLen) / 2) - len(now)) + now
+
+def throwError(text, char='!', exitCode=1):
+    """Thow error message and quit"""
+
+    textLen = len(text)
+    title = '[ ERROR ]'
+    size = max(len(text)*2,len(title)*2)
+    line = char * int(np.floor((size - textLen) / 2)) + title + char * int(np.ceil((size - textLen) / 2))
+
+    print('\n\n\n%s\n\n%s\n\n%s' % (
+            line,
+            text,
+            line))
+    sys.exit(exitCode)
 
 
 def runGmx(cmd, logFile, logLine='', cwd=cwd):

@@ -49,7 +49,7 @@ class tsSetup:
         if self.gmx != None:
             print('Gromacs installation:\t\tOK')
         else:
-            sys.exit('Error : invalid gmx path ' + gmx + '\n' +
+            throwError('Error : invalid gmx path ' + gmx + '\n' +
                      'Make sure to have a working version of gromacs 5.X installed!')
 
         # Check top, gro, mdp and ndx
@@ -58,7 +58,7 @@ class tsSetup:
                 print("%s file:\t\t\tOK" % label)
             else:
                 if label != 'ndx':
-                    sys.exit('%s file not found: %s' (label, filePath))
+                    throwError('%s file not found: %s' % (label, filePath))
                 else:
                     print('%s file:\t\t\tnot found' % label)
 
@@ -89,7 +89,7 @@ class tsSetup:
             self.traj = traj
             print('Trajectory file:\t\tOK')
         else:
-            sys.exit('Trajectory file not found: '+ traj)
+            throwError('Trajectory file not found: '+ traj)
 
         # Check and load colvar file.
         if os.path.isfile(colvar):
@@ -97,11 +97,11 @@ class tsSetup:
             print('COLVAR file:\t\t\tOK')
             trajColvar = parseTxt(colvar)
         else:
-            sys.exit('COLVAR file not found: ' + colvar)
+            throwError('COLVAR file not found: ' + colvar)
 
         # Check length of interface list
         if len(window) != 3:
-            sys.exit('Wrong number of elements as window interfaces')
+            throwError('Wrong number of elements as window interfaces')
 
 
         # 2. CREATE FOLDER AND COPY/SYMLINK INITIAL TRAJ DATA-------------------------------
@@ -125,7 +125,7 @@ class tsSetup:
             if overwrite:
                 shutil.rmtree(path)
             else:
-                sys.exit('Refusing to overwrite directory')
+                throwError('Refusing to overwrite directory')
 
 
         # Create a handy dictionary with the path folders
@@ -198,11 +198,11 @@ class tsSetup:
 
         # Complain if not determined
         if not ('xtc_stride' in config or 'trr_stride' in config):
-            sys.exit('XTC/TRR stride not found in ' + self.mdp)
+            throwError('XTC/TRR stride not found in ' + self.mdp)
         elif not 'timestep' in config:
-            sys.exit('Timestep not found in ' + self.mdp)
+            throwError('Timestep not found in ' + self.mdp)
         elif not 'colvar_stride' in config:
-            sys.exit('COLVAR stride not found in ' + pathTree['run'] + 'plumed_bw.dat')
+            throwError('COLVAR stride not found in ' + pathTree['run'] + 'plumed_bw.dat')
 
         if 'xtc_stride' in config:
             print('XTC stride:\t\t\t',config['xtc_stride'])
@@ -264,7 +264,7 @@ class tsSetup:
         if os.path.isfile(path + 'window.cfg'):
             print(sectionDelimiter("SETUP RUN"))
         else:
-            sys.exit('Error: the folder does not seem to be a TS-PPTIS window')
+            throwError('Error: the folder does not seem to be a TS-PPTIS window')
 
         print('Setting up run in:\t\t', path)
 
@@ -308,7 +308,7 @@ class tsSetup:
         elif os.path.isfile(prevRun + '.trr'):
             prevTrajExt = '.trr'
         else:
-            sys.exit('Trajectory file not found: ' +  prevRun + ' [xtc/trr]')
+            throwError('Trajectory file not found: ' +  prevRun + ' [xtc/trr]')
 
 
         # Get number of frames of the initial trajectory.
@@ -428,7 +428,7 @@ class tsSetup:
         if os.path.isfile(path + 'window.cfg'):
             print(sectionDelimiter("FINALIZING"))
         else:
-            sys.exit('Error: the folder does not seem to be a TS-PPTIS window')
+            throwError('Error: the folder does not seem to be a TS-PPTIS window')
 
         print('Finalizing:\t\t', path)
 
@@ -451,7 +451,7 @@ class tsSetup:
         elif os.path.isfile(pathTree['run'] + 'bw.trr'):
             trajExt = '.trr'
         else:
-            sys.exit('Trajectory files not found: ' + path)
+            throwError('Trajectory files not found: ' + path)
 
         # Inverting BW replica and joining trajectories...
         # Follow the TSPPTIS 1 convention of getting frame 0 from the FW replica
@@ -460,7 +460,7 @@ class tsSetup:
         bwTraj, fwTraj = [md.load(pathTree['run'] + 'bw' + trajExt, top=self.gro),
                          md.load(pathTree['run'] + 'fw' + trajExt, top=self.gro)]
 
-        if len(bwTraj) == 0 or len(fwTraj) == 0: sys.exit('Length of one of trajectories is 0')
+        if len(bwTraj) == 0 or len(fwTraj) == 0: throwError('Length of one of trajectories is 0')
 
         replTraj = [bwTraj[:0:-1], fwTraj]
 
