@@ -620,14 +620,14 @@ class tsAnalysis:
     from a set of gromacs simulations.
     """
 
-    def __init__(self, units='kJ/mol', folderName='../testfiles/'):
+    def __init__(self, folderName, units='kJ/mol'):
         """Initialise the analysis.
 
         Args:
 
-            units (string, optional): energy units of the input free energy
             folderName (string, optional): path to the folder containing the
                 pptis output directories
+            units (string, optional): energy units of the input free energy
 
         """
 
@@ -653,74 +653,76 @@ class tsAnalysis:
                 windows subdirectories
         
         """
-        # WARNING: UNTESTED
 
         if folderName=='': folderName=self.pathToFiles
 
         output=open(folderName+'/probabilities.dat', 'w')
-        #TODO: add header to file
+        output.write('#Name\tLambda\tpmm\tppm\tpmp\tppp\n')
 
         listFold=[]
-        for fold in [x[0] for x in os.walk(folderName)]:
-            if fold.startswith('pptis'):
-                listFold.append(fold)
+        for fold in [x[0] for x in os.walk(folderName, topdown=True)]:
+            if fold.startswith(folderName+'/pptis')\
+                and not any(s in fold for s in ['/data','/run','/temp']): #easy to break, find alternative
+                    listFold.append(fold)
 
         for window in listFold:
-            target=getLambda(folderName+window)
-
+            target=getLambda(window)
            # nAcc=getNumRows(folderName+window+'/tps_acc.log')
            # nRej=getNumRows(folderName+window+'/tps_rej.log')
 
             tAcc,tRej,iState,fState=[],[],[],[]
             dRej,dState={},{}
 
-            dataAcc=open(folderName+window+'/tps_acc.log','r')
+            dataAcc=open(window+'/tps_acc.log','r')
             for line in dataAcc:
-                #not really needed, I'm going to leave them for now
-                tAcc.append(np.int(line[0]))
-                iState.append(line[5])
-                fState.append(line[6])
+                if line[0]!='#':
+                    line=line.split()
+                    #not really needed, I'm going to leave them for now
+                    tAcc.append(np.int(line[0]))
+                    iState.append(line[4])
+                    fState.append(line[5])
            
-                #not sure about this dictionary
-                if line[5]+line[6] not in dState:
-                    dState[line[5]+line[6]]=0
-                dState[line[5]+line[6]]+=1
+                    #not sure about this dictionary
+                    if line[4]+line[5] not in dState:
+                        dState[line[4]+line[5]]=0
+                    dState[line[4]+line[5]]+=1
                 #there's a statement in Giorgio's scripts about weights 
                 #on these variables, but it seems to be avoided through
                 #a "next" in the loop... check it out!
             dataAcc.close()
 
-            dataRej=open(folderName+window+'/tps_rej.log','r')
+            dataRej=open(window+'/tps_rej.log','r')
             for line in dataRej:
-                #not really needed, I'm going to leave it for now
-                tRej.append(np.int(line[0]))
+                if line[0]!='#':
+                    line=line.split()
+                    #not really needed, I'm going to leave it for now
+                    tRej.append(np.int(line[0]))
 
-                #not sure about this dictionary
-                if np.int(line[0]) not in dRej:
-                    dRej[np.int(line[0])]=0
-                dRej[np.int(line[0])]+=1
+                    #not sure about this dictionary
+                    if np.int(line[0]) not in dRej:
+                        dRej[np.int(line[0])]=0
+                    dRej[np.int(line[0])]+=1
 
             dataRej.close()
-
-            if dState['AB']==0 or dState['AA']==0:
+            
+            if 'AB' not in dState or 'AA' not in dState:
                 #not sure why the second condition is necessary...
-                ppm='inf'
-                pmm='inf'
+                ppm=float('inf')
+                pmm=float('inf')
             else:
                 ppm=dState['AB']*1.0/(dState['AB']+dState['AA'])
                 pmm=1-ppm
 
 
-            if dState['BA']==0 or dState['BB']==0:
+            if 'BA' not in dState or 'BB' not in dState:
                 #not sure why the second condition is necessary...
-                pmp='inf'
-                ppp='inf'
+                pmp=float('inf')
+                ppp=float('inf')
             else:
                 pmp=dState['BA']*1.0/(dState['BA']+dState['BB'])
                 ppp=1-pmp
 
-
-            output.write('{:s}'.format(window)+'\t'+'{:.2f}'.format(target)+'\t'+\
+            output.write('{:s}'.format(window[window.rfind('/')+1:])+'\t'+'{:.2f}'.format(target)+'\t'+\
                '{:.2f}'.format(pmm)+'\t'+'{:.2f}'.format(ppm)+'\t'+'{:.2f}'.format(pmp)+'\t'+'{:.2f}'.format(ppp)+'\n')
             self.probInfo.append([target,pmm,ppm,pmp,ppp]) 
 
@@ -891,24 +893,26 @@ def testAll():
     """ Runs a standard set of commands to test the correct functioning of TS-PPTIS. """
 
     # Test initialisation
-    ts = tsSetup('../testfiles/topol.top',
-                 '../testfiles/system.gro',
-                 '../testfiles/md.mdp',
-                  gmx='/usr/bin/gmx')
-#                  gmx='/usr/local/gromacs/bin/gmx')
+    #ts = tsSetup('../testfiles/topol.top',
+    #             '../testfiles/system.gro',
+    #             '../testfiles/md.mdp',
+    #              gmx='/usr/bin/gmx')
+#   #               gmx='/usr/local/gromacs/bin/gmx')
 
-    ts.initWindow('../testfiles/pptis10',
-                  [1.5,1.7,1.9],
-                  '../testfiles/traj_fixed.xtc',
-                  '../testfiles/COLVAR',
-                  overwrite=True)
+    #ts.initWindow('../testfiles/pptis10',
+    #              [1.5,1.7,1.9],
+    #              '../testfiles/traj_fixed.xtc',
+    #              '../testfiles/COLVAR',
+    #              overwrite=True)
 
-    ts.setUpTPS('../testfiles/pptis10')
+    #ts.setUpTPS('../testfiles/pptis10')
 
-    ts.finalizeTPS('../testfiles/pptis10')
+    #ts.finalizeTPS('../testfiles/pptis10')
 
-    tsa = tsAnalysis()
-     
+    #tsa = tsAnalysis('../testfiles')
+    
+    tsa = tsAnalysis('/home/federico/Giulio/pptis_test')     
+
     tsa.getProbabilities()
 #    tsa.getCrossings() #need TS
 #    tsa.getRates(...) ##need fes, TS etc...

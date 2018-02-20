@@ -513,8 +513,8 @@ def getLambda(pathToFile):
 
     winFile=open(pathToFile+'/window.cfg',"r")
     for line in winFile.readlines():
-        if line[0]=='interfaces':
-            return np.float(line[-1].split(':')[1])
+        if line.startswith('interfaces'):
+            return np.float(line.split(':')[1])
 
 
 def getWeightTraj(pathToFile, index):
