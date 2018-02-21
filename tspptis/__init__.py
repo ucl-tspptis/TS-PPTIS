@@ -522,7 +522,7 @@ class tsSetup:
         print('Start/end side:\t\t\t%s -> %s' % (endPoint[0], endPoint[1]),end ='')
 
         if 'T' in endPoint:
-            print('[TMAX REACHED]')
+            print(' [TMAX REACHED]')
         else:
             print()
 
@@ -541,9 +541,9 @@ class tsSetup:
 
             if i < len(crossHist):
                 cross = str(int(crossHist[i]))
-                # Calculate absolute crossing speed
-                if crossHist[i] != 0:
-                   crossSpeed =  str(
+                # Calculate absolute and end-point crossing speed
+                if crossHist[i] != 0 or i == 0 or i == len(crossHist) - 1:
+                    crossSpeed =  str(
                            np.abs(
                                round(
                            (jointColvar[i+1, 1] - jointColvar[i, 1]) / (jointColvar[i+1, 0] - jointColvar[i, 0]),3)))
@@ -881,11 +881,11 @@ def testAll():
     """ Runs a standard set of commands to test the correct functioning of TS-PPTIS. """
 
     # Test initialisation
-    #ts = tsSetup('../testfiles/topol.top',
-    #             '../testfiles/system.gro',
-    #             '../testfiles/md.mdp',
-    #              gmx='/usr/bin/gmx')
-#   #               gmx='/usr/local/gromacs/bin/gmx')
+    ts = tsSetup('../testfiles/topol.top',
+                 '../testfiles/system.gro',
+                 '../testfiles/md.mdp',
+                  gmx='/usr/bin/gmx')
+#                  gmx='/usr/local/gromacs/bin/gmx')
 
     #ts.initWindow('../testfiles/pptis10',
     #              [1.5,1.7,1.9],
@@ -895,26 +895,26 @@ def testAll():
 
     #ts.setUpTPS('../testfiles/pptis10')
 
-    #ts.finalizeTPS('../testfiles/pptis10')
+    ts.finalizeTPS('../testfiles/pptis10')
 
     #tsa = tsAnalysis('../testfiles')
     
-    tsa = tsAnalysis('/home/federico/Giulio/pptis_test')     
+    #tsa = tsAnalysis('/home/federico/Giulio/pptis_test')     
 
-    tsa.getProbabilities()
-    tsa.getCrossings(0.5) 
+    #tsa.getProbabilities()
+    #tsa.getCrossings(0.5) 
    
-    #for now externally deal with fes.dat format, then we can
-    #add a way to automatically read plumed2 output formats
-    fesList=[]
-    f1,f2=[],[]
-    for line in open('/home/federico/Giulio/pptis_test/fes.dat','r'):
-        line=line.split()
-        if line[0]!='#!' and len(line)>0:
-            f1.append(float(line[0])),f2.append(float(line[1])) 
-    
-    fesList.append(f1), fesList.append(f2)
-    tsa.getRates(fesList) 
+    ##for now externally deal with fes.dat format, then we can
+    ##add a way to automatically read plumed2 output formats
+    #fesList=[]
+    #f1,f2=[],[]
+    #for line in open('/home/federico/Giulio/pptis_test/fes.dat','r'):
+    #    line=line.split()
+    #    if line[0]!='#!' and len(line)>0:
+    #        f1.append(float(line[0])),f2.append(float(line[1])) 
+    #
+    #fesList.append(f1), fesList.append(f2)
+    #tsa.getRates(fesList) 
 
 if __name__ == "__main__":
 
