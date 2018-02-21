@@ -47,7 +47,7 @@ class tsSetup:
         #Check local gromacs installation.
         self.gmx = findExe(gmx)
         if self.gmx != None:
-            print('Gromacs installation:\t\tOK')
+            printLine('Gromacs installation','OK')
         else:
             throwError('Error : invalid gmx path ' + gmx + '\n' +
                      'Make sure to have a working version of gromacs 5.X installed!')
@@ -55,12 +55,12 @@ class tsSetup:
         # Check top, gro, mdp and ndx
         for label, filePath in zip(['top','gro','mdp', 'ndx'],[top, gro, mdp, ndx]):
             if os.path.isfile(filePath):
-                print("%s file:\t\t\tOK" % label)
+                printLine("%s file" % label,'OK')
             else:
                 if label != 'ndx':
                     throwError('%s file not found: %s' % (label, filePath))
                 else:
-                    print('%s file:\t\t\tnot found' % label)
+                    printLine('%s file' % label, 'not found')
 
         # 2. STORE VARIABLES------------------------------------------------------
         self.gro = gro
@@ -87,14 +87,14 @@ class tsSetup:
         # Check and load trajectory data.
         if os.path.isfile(traj):
             self.traj = traj
-            print('Trajectory file:\t\tOK')
+            printLine('Trajectory file','OK')
         else:
             throwError('Trajectory file not found: '+ traj)
 
         # Check and load colvar file.
         if os.path.isfile(colvar):
             self.colvar = colvar
-            print('COLVAR file:\t\t\tOK')
+            printLine('COLVAR file','OK')
             trajColvar = parseTxt(colvar)
         else:
             throwError('COLVAR file not found: ' + colvar)
@@ -116,9 +116,9 @@ class tsSetup:
             path += '/'
 
         if overwrite:
-            print("Initialising window [O]:\t", path)
+            printLine("Initialising window [O]", path)
         else:
-            print("Initialising window:\t\t", path)
+            printLine("Initialising window", path)
 
         # Check if folder exists and if overwriting is allowed
         if os.path.isdir(path):
@@ -205,10 +205,10 @@ class tsSetup:
             throwError('COLVAR stride not found in ' + pathTree['run'] + 'plumed_bw.dat')
 
         if 'xtc_stride' in config:
-            print('XTC stride:\t\t\t',config['xtc_stride'])
+            printLine('XTC stride',config['xtc_stride'])
         else:
-            print('TRR stride:\t\t\t',config['trr_stride'])
-        print('COLVAR stride:\t\t\t', config['colvar_stride'])
+            printLine('TRR stride',config['trr_stride'])
+        printLine('COLVAR stride', config['colvar_stride'])
 
 
         # write to config file
@@ -266,7 +266,7 @@ class tsSetup:
         else:
             throwError('Error: the folder does not seem to be a TS-PPTIS window')
 
-        print('Setting up run in:\t\t', path)
+        printLine('Setting up run in', path)
 
         continuation = False
         # Open tps_acc.log, which holds info about accepted trajectories
@@ -278,10 +278,10 @@ class tsSetup:
         if runNumber > 1:
             continuation = True  # The first is the initial so, > 1 is continuation
 
-        print('First run:\t\t\t', not continuation)
+        printLine('First run', not continuation)
 
         config = parseConfig(path + 'window.cfg')
-        print('Interfaces:\t\t\t', config['interfaces'])
+        printLine('Interfaces', config['interfaces'])
 
         # Delete everything in the temp/ and run/ subdirectory. Keep plumed files
         # and md.mdp file
@@ -299,7 +299,7 @@ class tsSetup:
         # 2. RECOVER PREVIOUS TRAJECTORY ----------------------------------------------
 
         prevRun = pathTree['data'] + '%05d' % (runNumber - 1)
-        print('Source trajectory data:\t\t', prevRun)
+        printLine('Source trajectory data', prevRun)
 
         # Determine the trajectory file type of the previous trajectory.
         # XTC is given priority:
@@ -314,7 +314,7 @@ class tsSetup:
         # Get number of frames of the initial trajectory.
         prevTraj = md.load(prevRun + prevTrajExt, top=self.gro)
         pathLength = len(prevTraj)
-        print("Path length:\t\t\t%d (%.1f ps)" % (pathLength,
+        printLine("Path length","%d (%.1f ps)" % (pathLength,
                 pathLength*config['timestep']*config[prevTrajExt[1:]+'_stride']))
 
 
@@ -323,7 +323,7 @@ class tsSetup:
         # Define TMAX
         tmax = (pathLength*config['timestep']*config[prevTrajExt[1:]+'_stride'])/np.random.random()
 
-        print('TMAX:\t\t\t\t%.3f ps' % tmax)
+        printLine('TMAX:','%.3f ps' % tmax)
 
         # Write TMAX in mdp file:
         setTmax(pathTree['temp']+'md.mdp', tmax, config['timestep'])
@@ -331,9 +331,9 @@ class tsSetup:
         # Define shooting point and dump gro file
         point = shootingPoint(prevRun + '.cv', config['interfaces'])
 
-        print('Shooting point:\t\t\t', point[1])
-        print('Shooting frame:\t\t\t', point[0])
-        print('Shooting frame LPF:\t\t', point[2])
+        printLine('Shooting point', point[1])
+        printLine('Shooting frame', point[0])
+        printLine('Shooting frame LPF', point[2])
 
         # Extract selected frame from previous trajectory
         extractFrame(point[1], prevTraj, self.gro,
@@ -430,7 +430,7 @@ class tsSetup:
         else:
             throwError('Error: the folder does not seem to be a TS-PPTIS window')
 
-        print('Finalizing:\t\t', path)
+        printLine('Finalizing', path)
 
         config = parseConfig(path + 'window.cfg')
 
@@ -439,9 +439,9 @@ class tsSetup:
         # Get run number by finding highest numbered trajectory in data/ dir (+1):
         runNumber = np.max([int(f.split('.')[0]) for f in os.listdir(pathTree['data']) if f.endswith('.cv')]) + 1
 
-        print('Run number:\t\t\t', runNumber)
+        printLine('Run number', runNumber)
 
-        print('Interfaces:\t\t\t', config['interfaces'])
+        printLine('Interfaces', config['interfaces'])
 
         # 2. RECOVER AND PROCESS OUTPUT ----------------------------------------------
 
@@ -477,8 +477,7 @@ class tsSetup:
             # Load replica colvar
             replColvar = parseTxt(pathTree['run'] + 'COLVAR_' + repl)
 
-            print("%s path length:\t\t\t%d (%.1f ps)" % (repl,len(replTraj[i]),
-                    len(replTraj[i])*config['timestep']*config[trajExt[1:]+'_stride']))
+            printLine("%s path length" % repl,"%d (%.1f ps)" % (len(replTraj[i]),len(replTraj[i])*config['timestep']*config[trajExt[1:]+'_stride']))
 
             # Invert colvar if BW
             if repl == 'BW':
@@ -518,15 +517,15 @@ class tsSetup:
                         np.sum(crossCount) > 0,
                         'T' not in endPoint)
 
-        print('Crossings (+/-):\t\t%d, %d' % (crossCount[0], crossCount[1]))
-        print('Start/end side:\t\t\t%s -> %s' % (endPoint[0], endPoint[1]),end ='')
+        printLine('Crossings (+/-)','%d, %d' % (crossCount[0], crossCount[1]))
+        printLine('Start/end side:','%s -> %s' % (endPoint[0], endPoint[1]),end ='')
 
         if 'T' in endPoint:
             print(' [TMAX REACHED]')
         else:
             print()
 
-        print('Accepted\t\t\t%s' % accepted)
+        printLine('Accepted', accepted)
 
 
         # 3. WRITE OUTPUT AND ARCHIVE FILES--------------------------------------------
@@ -887,13 +886,13 @@ def testAll():
                   gmx='/usr/bin/gmx')
 #                  gmx='/usr/local/gromacs/bin/gmx')
 
-    #ts.initWindow('../testfiles/pptis10',
-    #              [1.5,1.7,1.9],
-    #              '../testfiles/traj_fixed.xtc',
-    #              '../testfiles/COLVAR',
-    #              overwrite=True)
+    ts.initWindow('../testfiles/pptis20',
+                  [1.5,1.7,1.9],
+                  '../testfiles/traj_fixed.xtc',
+                  '../testfiles/COLVAR',
+                  overwrite=True)
 
-    #ts.setUpTPS('../testfiles/pptis10')
+    ts.setUpTPS('../testfiles/pptis10')
 
     ts.finalizeTPS('../testfiles/pptis10')
 

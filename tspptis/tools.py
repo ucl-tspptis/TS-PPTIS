@@ -66,6 +66,10 @@ def getNumRows(nameFile):
     return nrows
 
 
+def printLine(fieldName, field, end='\n'):
+    print('{:<25} |{:s}{}'.format(fieldName, ' '*5, field), end=end)
+
+
 def parseWindows(nameFile):
     """Parse a text file containing information on the TS-PPTIS windows.
 
@@ -279,14 +283,16 @@ def shootingPoint(colvarFile, interfaces):
     return frame, round(colvar[frame, 1], 3), int(colvar[frame,0] >= 0)
 
 
-def sectionDelimiter(title, size=80, char='-'):
+def sectionDelimiter(title, size=80, char='_'):
     """Prints the section title"""
 
     title = '[ ' + title + ' ]'
     titleLen = len(title)
     now = timestamp()
 
-    return '\n' + char * int(np.floor((size - titleLen) / 2)) + title + char * int(np.ceil((size - titleLen) / 2) - len(now)) + now
+    return '\n' + char * int(np.floor((size - titleLen) / 2)) +\
+            title + char * int(np.ceil((size - titleLen) / 2) - len(now)) +\
+            now + '\n'
 
 def throwError(text, char='!', exitCode=1):
     """Thow error message and quit"""
