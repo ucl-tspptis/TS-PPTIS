@@ -609,10 +609,6 @@ class tsSetup:
 
 
 
-# ----------------------------------------------------------------------------------------------------------------
-
-
-
 class tsAnalysis:
     """ TS-PPTIS analysis class.
 
@@ -741,23 +737,19 @@ class tsAnalysis:
         
         """
 
-        # FC: for the moment being, this function reads par files as in Giorgio's implementation
-        # it will need to be adapted to read from our new output format.
-
-        # WARNING: UNTESTED
-
         if folderName=='': folderName=self.pathToFiles
         
         output=open(folderName+'/crossings.dat', 'w')                
-        #TODO: add header to file
-
+        output.write('#Shot\tMeanVelocity\t+Cross\t-Cross\tWeight\tEndingSide\n')
+       
         listFold=[]
-        for fold in [x[0] for x in os.walk(folderName)]:
-	    if fold.startswth('pptis'):
-                listFold.append(fold)
+        for fold in [x[0] for x in os.walk(folderName, topdown=True)]:
+            if fold.startswith(folderName+'/pptis')\
+                and not any(s in fold for s in ['/data','/run','/temp']): #easy to break, find alternative
+                    listFold.append(fold)
 
         for window in listFold:
-            target=getLambda(folderName+window)
+            target=getLambda(window)
             
             #keep going only if lambda is at the TS
             if target!=tsLambda: continue
@@ -767,20 +759,20 @@ class tsAnalysis:
 
             #load the par files, to be adapted 
             listPar=[]
-            for fi in os.listdir(folderName+window+'/data/'):
-                if fi.endswith(".info"):
+            for fi in os.listdir(window+'/data/'):
+                if fi.endswith(".info") and not fi.startswith("rej_"):
                     listPar.append(fi)
             listSorted=sorted(listPar, key=natural_keys)
 
             for fi in listSorted:
-                crossData = analyzeCross(folderName+window+'/data/'+fi, target) #see tools
+                crossData = analyzeCross(window+'/data/'+fi, target) #see tools
                 pp += crossData['p0p']  #not needed?
                 pm += crossData['p0m']  #not needed?
-                weight = getWeightTraj(folderName+window+'/tps_rej.log', fi[:4]) #see tools
+                weight = getWeightTraj(window+'/tps_rej.log', fi[:4]) #see tools
                 velSum += crossData['vel']*weight #not needed?
                 weightsSum += weight #not needed?
         
-            #LOGGING and OUTPUTTING...                
+            #LOGGING and OUTPUTTING... to be fixed               
                 if crossData['vel'] > 0:    #but why only positive vel? 
                     output.write('{:s}'.format(fi[:4]) +'\t'+ '{:.4f}'.format(crossData['vel'])+'\t' + '{:d}'.format(crossData['nrPos']) + '\t' +\
                     '{:d}'.format(crossData['nrNeg']) + '\t' +'{:d}'.format(weight)+ '\t' +crossData['end'] +'\n')  
@@ -816,10 +808,6 @@ class tsAnalysis:
 
         """
 
-        # NOTE FC: This implementation HEAVILY relies on files as formatted by Giorgio's script
-        # it should be adequately adapted if we decide to output that information in a different
-        # format
-
         if Bstate == -1:
             As = np.argmin(fes[1])
         else:
@@ -829,9 +817,9 @@ class tsAnalysis:
             Bs = len(fes)-1
         else:
             Bs = Bstate
-
+        
         if indexTS == None or indexTS > np.max(fes[0]) or indexTS < np.min(fes[0]):
-            iTS = np.argmax([y for x, y in fes])
+            iTS = np.argmax(fes[1])
         else:
             iTS = indexTS
         # TS=np.argmax(val[:int(len(val)/4)])
@@ -839,27 +827,27 @@ class tsAnalysis:
         if error == None:
             error = 1 / self.beta
 
-        offFES = [f - fes[1][TS] for f in fes[1]]
+        offFES = [f - fes[1][iTS] for f in fes[1]]
 
         norm = 0
         for i in range(As, iTS):
-            norm += 0.5 * (np.exp(-beta * offFES[i + 1]) + np.exp(-beta * \
+            norm += 0.5 * (np.exp(-self.beta * offFES[i + 1]) + np.exp(-self.beta * \
                 offFES[i])) * (fes[0][i + 1] - fes[0][i])
-        PA = np.exp(-beta * (offFES[iTS] + Acorr)) / norm
+        PA = np.exp(-self.beta * (offFES[iTS] + Acorr)) / norm
 
-        PAlow = np.exp(-beta * (offFES[TS] + Acorr - error)) / norm
-        PAupp = np.exp(-beta * (offFES[TS] + Acorr + error)) / norm
+        PAlow = np.exp(-self.beta * (offFES[iTS] + Acorr - error)) / norm
+        PAupp = np.exp(-self.beta * (offFES[iTS] + Acorr + error)) / norm
 
         norm = 0
         for i in range(iTS, Bs - 1):
-            norm += 0.5 * (np.exp(-beta * offFES[i + 1]) + np.exp(-beta * \
+            norm += 0.5 * (np.exp(-self.beta * offFES[i + 1]) + np.exp(-self.beta * \
                  offFES[i])) * (fes[0][i + 1] - fes[0][i])
-        PB = np.exp(-beta * (offFES[iTS] + Bcorr)) / norm
+        PB = np.exp(-self.beta * (offFES[iTS] + Bcorr)) / norm
 
-        PBlow = np.exp(-beta * (offFES[TS] + Bcorr - error)) / norm
-        PBupp = np.exp(-beta * (offFES[TS] + Bcorr + error)) / norm
+        PBlow = np.exp(-self.beta * (offFES[iTS] + Bcorr - error)) / norm
+        PBupp = np.exp(-self.beta * (offFES[iTS] + Bcorr + error)) / norm
 
-        R = calcR(fes[0][iTS], ratesInfo=self.ratesInfo, crossInfo=self.crossInfo)
+        R = calcR(fes[0][iTS], probInfo=self.probInfo, crossInfo=self.crossInfo)
 
         kAB = PA * R * 1e12
         kABlow = PAlow * R * 1e12
@@ -914,8 +902,19 @@ def testAll():
     tsa = tsAnalysis('/home/federico/Giulio/pptis_test')     
 
     tsa.getProbabilities()
-#    tsa.getCrossings() #need TS
-#    tsa.getRates(...) ##need fes, TS etc...
+    tsa.getCrossings(0.5) 
+   
+    #for now externally deal with fes.dat format, then we can
+    #add a way to automatically read plumed2 output formats
+    fesList=[]
+    f1,f2=[],[]
+    for line in open('/home/federico/Giulio/pptis_test/fes.dat','r'):
+        line=line.split()
+        if line[0]!='#!' and len(line)>0:
+            f1.append(float(line[0])),f2.append(float(line[1])) 
+    
+    fesList.append(f1), fesList.append(f2)
+    tsa.getRates(fesList) 
 
 if __name__ == "__main__":
 

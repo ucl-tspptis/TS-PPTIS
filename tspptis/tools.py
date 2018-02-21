@@ -17,11 +17,35 @@ import subprocess as sub
 import numpy as np
 import mdtraj as md
 import datetime
-
+import re
 
 # Used as cdw in Popen
 cwd = os.getcwd()
 
+
+def convInt(text):
+    """Takes an input and returns it as itself or as int if it's a digit.
+
+    Args:
+        text (string or number): input text 
+
+    Returns:
+        (string or int): the input converted to int if a digit
+    """
+
+    return int(text) if text.isdigit() else text
+
+def natural_keys(text):
+    """Help function to sort in human friendly order.
+
+    Args:
+        text (string or number): input text 
+
+    Returns:
+        (list,tring or int): list with the components of the splitted input
+             converted to int if digits
+    """
+    return [ convInt(c) for c in re.split('(\d+)', text) ]
 
 def getNumRows(nameFile):
     """Count the number of rows in a file. Returns 0 if the file does not exist.
@@ -495,11 +519,6 @@ def setTmax(mdpFile, tmax, timestep):
             handle.write(mdp[i])
 
 
-
-# -------------------------------------------------------
-
-###### In the following are the analysis tools, remove this line when done####
-
 def getLambda(pathToFile):
     """Extracts the lambda value of a window from the window.cfg file in its 
     pptis output folder.
@@ -541,30 +560,36 @@ def getWeightTraj(pathToFile, index):
 
 
 def analyzeCross(fileName, target):
-    """Reads an ouput .par file in Giorgio's format and extracts information
+    """Reads an  ouput .info file and extracts information
     on the crossing events.
 
     Args:
-        fileName (string): path to the input .par file        
+        fileName (string): path to the input .info file        
         target (float): the position of the windows to analyze in the CV space
     
     Returns:
-        info (dictionaru): a ditctionary containing information on velocities
+        info (dictionary): a ditctionary containing information on velocities
             and number of crossing events to be used in the calculation of the
             raates.
     """
 
     #Note FC: we need to decide if and what we want to log.
 
+    #NOTE FC: (SUM of + - cross) is already contained in tps_acc.log, the only 
+    #other info that's missing is the average velocity. For the moment let's leave it
+    #like this, but let's consider moving everything into tps_acc.log
+
     cv,vel,crEvent,side=[],[],[],[]
     
     data = open(fileName,"r")
     for line in data.readlines():
-        if line[0]!='#':
+        if line[0]!='#' and line!='\n':
             read=line.split()
             cv.append(np.float(read[1])) #not needed
-            crEvent.append(np.int(read[4]))
-            side.append(np.int(read[3]))
+            #clean this 
+            if len(read)>4:
+                crEvent.append(np.int(read[4]))
+            side.append(np.int(read[3])) #not needed
             if len(read)>5:
                 vel.append(np.float(read[-1]))
     data.close()
@@ -574,6 +599,7 @@ def analyzeCross(fileName, target):
 
 
 ######### Old version, please remove
+#None of this seems to be needed if not for logging...
     n = 0
     average = 0
     p0p,p0m = 0,0
