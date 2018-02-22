@@ -876,27 +876,111 @@ class tsAnalysis:
         print("%.3e" % kABupp, "%.3e" % kBAupp)
 
 
+    def endPointVel(self, folderName='',bins=10):
+        """ Calculates the --/+- and -+/+- end point velocity distribution for each window.
+            Can be used to check for the vality of the memory loss assumption
+
+            Args:
+                folderName (string): folder containing the TS-PPTIS windows' folders
+                bins (int): number of histogram bins
+
+            Returns:
+                zippedHist (nested list): Nx2 list where N is the number
+        """
+
+        # List windows' folders
+        if folderName=='': folderName=self.pathToFiles
+        listFold=[]
+        for fold in [x[0] for x in os.walk(folderName, topdown=True)]:
+            if fold.startswith(folderName+'/pptis')\
+                and not any(s in fold for s in ['/data','/run','/temp']): #easy to break, find alternative
+                    listFold.append(fold)
+        listFold = sorted(listFold, key=natural_keys)
+
+
+        globEndPointVel = []
+
+        for window in listFold:
+            # for each folder list info files
+            listPar=[]
+            for fi in os.listdir(window+'/data/'):
+                if fi.endswith(".info") and not fi.startswith("rej_"):
+                    listPar.append(window+'/data/'+fi)
+            listPar = sorted(listPar, key=natural_keys)
+
+            # load tps_acc.log
+            with open(window+'/tps_acc.log') as handle:
+                tpsAcc = [filter(None,
+                                   line.strip().split(' '))
+                            for line in handle.readlines() if line[0] != '#']
+
+            endPointVel = []
+
+            for i in range(len(listPar)):
+                # For each info file get end-point velocity
+		with open(listPar[i]) as handle:
+			par = [map(float,
+                                    filter(None,
+                                           line.strip().split(' ')))
+				for line in handle.readlines() if line[0] != '#']
+
+		velocity = [line[5] for line in par if len(line) >= 6]
+		velocity = velocity[-1]
+                # ************************TESTING *******************************
+                # velocity *= np.random.random()
+                # ***************************************************************
+
+                # Record end point interface
+                endPoint = int(tpsAcc[i+1][5] == 'B')
+
+                # Combine interface and velocity in list
+                endPointVel.append([endPoint,velocity])
+
+            globEndPointVel.append(np.array(endPointVel))
+
+        # Holds, for each window, the list of end point interfaces and velocities
+        globEndPointVel = np.array(globEndPointVel)
+
+        # Concatenate *A and *B entries for each info file for each window
+        velEnsemble = (np.concatenate([window[window[:,0] == 0,1] if len(window) > 0 else [] for window in globEndPointVel]).flatten(),
+                       np.concatenate([window[window[:,0] == 1,1] if len(window) > 0 else [] for window in globEndPointVel]).flatten())
+
+
+        # TODO: one hist for each window
+
+        # For each ensemble calculate the histogram
+        hist = [np.histogram(x,bins=bins) for x in velEnsemble]
+        # NumPy returns the bins' bounds, not centers. Calculate midpoints
+        bins = [[(h[1][x+1] + h[1][x])/2 for x in range(len(h[1])-1)] for h in hist]
+        # Zip it nicely
+        zippedHist = zip(bins,hist)
+
+        # Plot histograms
+        #import matplotlib.pyplot as plt
+        #for i in range(2):
+        #    plt.bar(bins[i],hist[i][0], edgecolor='k',width=bins[i][1]-bins[1][0])
+        #plt.show()
+
+        return zippedHist, velEnsemble, listFold
+
 def testAll():
     """ Runs a standard set of commands to test the correct functioning of TS-PPTIS. """
 
     # Test initialisation
-    ts = tsSetup('../testfiles/topol.top',
-                 '../testfiles/system.gro',
-                 '../testfiles/md.mdp',
-                  gmx='/usr/bin/gmx')
-#                  gmx='/usr/local/gromacs/bin/gmx')
+    #ts = tsSetup('../testfiles/topol.top',
+    #             '../testfiles/system.gro',
+    #             '../testfiles/md.mdp',
+    #              gmx='/usr/bin/gmx')
+    #ts.initWindow('../testfiles/pptis20',
+    #              [1.5,1.7,1.9],
+    #              '../testfiles/traj_fixed.xtc',
+    #              '../testfiles/COLVAR',
+    #              overwrite=True)
+    #ts.setUpTPS('../testfiles/pptis10')
+    #ts.finalizeTPS('../testfiles/pptis10')
 
-    ts.initWindow('../testfiles/pptis20',
-                  [1.5,1.7,1.9],
-                  '../testfiles/traj_fixed.xtc',
-                  '../testfiles/COLVAR',
-                  overwrite=True)
-
-    ts.setUpTPS('../testfiles/pptis10')
-
-    ts.finalizeTPS('../testfiles/pptis10')
-
-    #tsa = tsAnalysis('../testfiles')
+    tsa = tsAnalysis('../testfiles')
+    tsa.endPointVel()
     
     #tsa = tsAnalysis('/home/federico/Giulio/pptis_test')     
 
