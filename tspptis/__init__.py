@@ -882,10 +882,18 @@ class tsAnalysis:
 
             Args:
                 folderName (string): folder containing the TS-PPTIS windows' folders
-                bins (int): number of histogram bins
+                bins (int):          number of histogram bins
 
             Returns:
-                zippedHist (nested list): Nx2 list where N is the number
+                globHist (nested list):         Nx2x2 list with the following axes:
+                                                    0: window
+                                                    1: *- / *+ ensemble
+                                                    2: end point velocity
+                                                       histogram bins and counts
+                globVelEnsemble (nested list): Nx2 list with the following axes:
+                                                    0: window
+                                                    1: *-/*+ end point velocity
+                                                       list
         """
 
         # List windows' folders
@@ -898,8 +906,7 @@ class tsAnalysis:
         listFold = sorted(listFold, key=natural_keys)
 
 
-        globEndPointVel = []
-
+        globHist, globVelEnsemble = [],[]
         for window in listFold:
             # for each folder list info files
             listPar=[]
@@ -926,9 +933,6 @@ class tsAnalysis:
 
 		velocity = [line[5] for line in par if len(line) >= 6]
 		velocity = velocity[-1]
-                # ************************TESTING *******************************
-                # velocity *= np.random.random()
-                # ***************************************************************
 
                 # Record end point interface
                 endPoint = int(tpsAcc[i+1][5] == 'B')
@@ -936,32 +940,31 @@ class tsAnalysis:
                 # Combine interface and velocity in list
                 endPointVel.append([endPoint,velocity])
 
-            globEndPointVel.append(np.array(endPointVel))
-
-        # Holds, for each window, the list of end point interfaces and velocities
-        globEndPointVel = np.array(globEndPointVel)
-
-        # Concatenate *A and *B entries for each info file for each window
-        velEnsemble = (np.concatenate([window[window[:,0] == 0,1] if len(window) > 0 else [] for window in globEndPointVel]).flatten(),
-                       np.concatenate([window[window[:,0] == 1,1] if len(window) > 0 else [] for window in globEndPointVel]).flatten())
+            endPointVel = np.array(endPointVel)
 
 
-        # TODO: one hist for each window
 
-        # For each ensemble calculate the histogram
-        hist = [np.histogram(x,bins=bins) for x in velEnsemble]
-        # NumPy returns the bins' bounds, not centers. Calculate midpoints
-        bins = [[(h[1][x+1] + h[1][x])/2 for x in range(len(h[1])-1)] for h in hist]
-        # Zip it nicely
-        zippedHist = zip(bins,hist)
+            if len(endPointVel) > 0:
+                # *- and *+ end point velocities 
+                velEnsemble = (endPointVel[endPointVel[:,0] == 0,1], endPointVel[endPointVel[:,0] == 1,1])
 
-        # Plot histograms
-        #import matplotlib.pyplot as plt
-        #for i in range(2):
-        #    plt.bar(bins[i],hist[i][0], edgecolor='k',width=bins[i][1]-bins[1][0])
-        #plt.show()
+                #*****TESTING*******
+                # velEnsemble = np.random.random(size=1000).reshape([2,500])
+                #******************
 
-        return zippedHist, velEnsemble, listFold
+                # For each ensemble calculate the histogram
+                hist = [np.histogram(x,bins=bins) if len(x)>0 else ([],[]) for x in velEnsemble]
+                # NumPy returns the bins' bounds, not centers. Calculate midpoints
+                midBins = [[(h[1][x+1] + h[1][x])/2 for x in range(len(h[1])-1)] if len(h[0])>0 else [] for h in hist]
+
+            else:
+                hist,midBins = np.array([]), np.array([])
+
+            # Zip it nicely. Discard original histogram bins h[1]
+            globHist.append(zip(midBins,[h[0] for h in hist]))
+            globVelEnsemble.append(velEnsemble)
+
+        return globHist, globVelEnsemble
 
 def testAll():
     """ Runs a standard set of commands to test the correct functioning of TS-PPTIS. """
@@ -979,14 +982,21 @@ def testAll():
     #ts.setUpTPS('../testfiles/pptis10')
     #ts.finalizeTPS('../testfiles/pptis10')
 
-    tsa = tsAnalysis('../testfiles')
-    tsa.endPointVel()
-    
+    #tsa = tsAnalysis('../testfiles')
+    #import matplotlib.pyplot as plt
+    #hist, _ = tsa.endPointVel()
+    #for i,window in enumerate(hist):
+    #    plt.subplot(len(hist),1,i+1)
+    #    for ensemble in window:
+    #        plt.bar(ensemble[0],ensemble[1],width=0.05,alpha=0.5)
+    #plt.show()
+
+
     #tsa = tsAnalysis('/home/federico/Giulio/pptis_test')     
 
     #tsa.getProbabilities()
     #tsa.getCrossings(0.5) 
-   
+
     ##for now externally deal with fes.dat format, then we can
     ##add a way to automatically read plumed2 output formats
     #fesList=[]
