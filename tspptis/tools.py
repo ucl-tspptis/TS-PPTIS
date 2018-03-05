@@ -763,6 +763,28 @@ def calcR(posTS, crossInfo, probInfo, debug=False):
         return R
     return R[-1]
 
+def plumed2List(fileName):
+    """Read a monodimensional free energy profile fes.dat file in Plumed 2 format
+    and convert it to a format readable by getRates.
+
+    Args:
+         fileName: path to Plumed 2 fes.dat file.
+
+    Returns:
+         nested list: fes information in the appropriate format.
+    """
+
+    fesList=[]
+    f1,f2=[],[]
+    for line in open(fileName,'r'):
+        line=line.split()
+        if line[0]!='#!' and len(line)>0:
+            f1.append(float(line[0])),f2.append(float(line[1])) 
+    
+    fesList.append(f1), fesList.append(f2)
+
+    return fesList
+
 
 ##################################################################################
 

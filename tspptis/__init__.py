@@ -234,8 +234,8 @@ class tsSetup:
 
 
 
-    def setUpTPS(self, path):
-        """Setup a TPS run
+    def setupRun(self, path):
+        """Setup a single TPS run
 
         Args:
             path (string): path of the window directory
@@ -401,7 +401,7 @@ class tsSetup:
         os.rename(pathTree['temp'] + 'bw.tpr', pathTree['run'] + 'bw.tpr')
 
 
-    def finalizeTPS(self, path):
+    def finalizeRun(self, path):
         """Setup finalize a TPS run
 
         Args:
@@ -966,6 +966,10 @@ class tsAnalysis:
 
         return globHist, globVelEnsemble
 
+
+        #TODO: add function to automatically check memory loss
+
+
 def testAll():
     """ Runs a standard set of commands to test the correct functioning of TS-PPTIS. """
 
@@ -997,16 +1001,7 @@ def testAll():
     #tsa.getProbabilities()
     #tsa.getCrossings(0.5) 
 
-    ##for now externally deal with fes.dat format, then we can
-    ##add a way to automatically read plumed2 output formats
-    #fesList=[]
-    #f1,f2=[],[]
-    #for line in open('/home/federico/Giulio/pptis_test/fes.dat','r'):
-    #    line=line.split()
-    #    if line[0]!='#!' and len(line)>0:
-    #        f1.append(float(line[0])),f2.append(float(line[1])) 
-    #
-    #fesList.append(f1), fesList.append(f2)
+    #plumed2List('/home/federico/Giulio/pptis_test/fes.dat'):
     #tsa.getRates(fesList) 
 
 if __name__ == "__main__":
