@@ -716,13 +716,8 @@ def calcR(posTS, crossInfo, probInfo, debug=False):
     p0p=pcw_ends * 1.0 / pcw
     p0n=ncw_ends * 1.0 / ncw
 
-    diffL=99999
-    lambda0=0
-    for i in range(len(lambdas)):
-        if np.abs(posTS - lambdas[i]) < diffL:
-            diffL=np.abs(posTS - lambdas[i])
-            lambda0=i
-
+    lambda0=getClosestLambda(posTS,lambdas)
+   
     A=[1, ppm[lambda0 + 1]]
     Ab=[1, pmp[lambda0 - 1]]
     R=[]
@@ -735,8 +730,10 @@ def calcR(posTS, crossInfo, probInfo, debug=False):
         AiNom=pmm[lambda0 + m] * ppm[lambda0 + m + 1] * A[m] * A[m + 1]
         AiDen=(pmp[lambda0 + m] * pmm[lambda0 + m + 1] + pmm[lambda0 + m] * ppm[lambda0 + m + 1])\
             * A[m] - pmp[lambda0 + m] * pmm[lambda0 + m + 1] * A[m + 1]
-        if AiDen == 0:
+        if AiDen == 0 or np.isinf(AiNom):
             break
+        if np.isnan(AiNom) or np.isnan(AiDen): #clean this mess...
+           A.append(A[-1])
         if lambda0+m+1 <= len(ppm)-1:
             A.append(AiNom/AiDen)
         else:
@@ -745,12 +742,16 @@ def calcR(posTS, crossInfo, probInfo, debug=False):
         AbiNom=ppp[lambda0 - m] * pmp[lambda0 - m - 1] * Ab[m] * Ab[m + 1]
         AbiDen=(ppm[lambda0 - m] * ppp[lambda0 - m - 1] + ppp[lambda0 - m] * pmp[lambda0 - m - 1])\
             * Ab[m] - ppm[lambda0 - m] * ppp[lambda0 - m - 1] * Ab[m + 1]
-        if AbiDen == 0:
+        if AbiDen == 0 or np.isinf(AbiNom):
+            Ab.append(Ab[-1]) # to ensure they are the same length
             break
+        if np.isnan(AbiNom) or np.isnan(AbiDen):
+            Ab.append(Ab[-1])
         if lambda0-m-1 >= 0:
             Ab.append(AbiNom/AbiDen)
         else:
             Ab.append(Ab[-1])
+    
 
     for m in range(0, len(A)):
         RiNom=0.5 * Rtst * \
@@ -768,10 +769,10 @@ def plumed2List(fileName):
     and convert it to a format readable by getRates.
 
     Args:
-         fileName: path to Plumed 2 fes.dat file.
+         fileNam (string)e: path to Plumed 2 free energy file.
 
     Returns:
-         nested list: fes information in the appropriate format.
+         fesList (nested list, float): fes information in the appropriate format.
     """
 
     fesList=[]
@@ -785,6 +786,26 @@ def plumed2List(fileName):
 
     return fesList
 
+def getClosestLambda(posTS,lambdas):
+    """Find the closest matching transition state lambda value from a list.
+
+    Args:
+         posTS (float): position of the transition state.
+         lambdas (list, float): list of all available windows positions.
+
+    Returns:
+         lambda 0 (float): the closest matching TS lambda.
+    """
+
+
+    diffL=99999
+    lambda0=0
+    for i in range(len(lambdas)):
+        if np.abs(posTS - lambdas[i]) < diffL:
+            diffL=np.abs(posTS - lambdas[i])
+            lambda0=i
+
+    return lambda0
 
 ##################################################################################
 

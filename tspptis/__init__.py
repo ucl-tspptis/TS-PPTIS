@@ -747,11 +747,17 @@ class tsAnalysis:
                 and not any(s in fold for s in ['/data','/run','/temp']): #easy to break, find alternative
                     listFold.append(fold)
 
+        lambdas=[]
+        for window in listFold:   #redundant loop, find a better way
+            lambdas.append(getLambda(window))
+        lamIdx=getClosestLambda(tsLambda,lambdas)
+
+            
         for window in listFold:
             target=getLambda(window)
-            
-            #keep going only if lambda is at the TS
-            if target!=tsLambda: continue
+
+            #keep going only if lambda is at the TS (or close to it)
+            if target!=lambdas[lamIdx]: continue
 
             pp,pm = 0,0
             velSum, weightsSum = 0,0 #needed only for logging if we decide to keep it
@@ -782,7 +788,7 @@ class tsAnalysis:
             break
 
     
-    def getRates(self, fes, Astate=-1, Bstate=-1, Acorr=0, Bcorr=0, indexTS=None, error=None, printFile=False):
+    def getRates(self, fes, Astate=-1, Bstate=-1, Acorr=0, Bcorr=0, valTS=None, error=None, printFile=False):
         """Reads the free energy surface FES, TS-PPTIS crossing probabilities
         and ouputs, calculate the rate constants and print(them to screen and/or to file.
 
@@ -799,7 +805,7 @@ class tsAnalysis:
                 (e.g. from external potentials)
             Bstate (int, optional): free energy correction to the B state
                 (e.g. from external potentials)
-            indexTS (int, optional): index of the TS in the FES vector provided,
+            valTS (int, optional): value of the TS in the FES vector provided,
                 if none provided automatically look for the highest point in the FES
             error (float, optional): free energy error to calculate the rates range,
                 if none provided automatically assume 1 kT
@@ -813,16 +819,14 @@ class tsAnalysis:
             As = Astate
 
         if Bstate == -1:
-            Bs = len(fes)-1
+            Bs = len(fes[1])-1
         else:
             Bs = Bstate
-        
-        if indexTS == None or indexTS > np.max(fes[0]) or indexTS < np.min(fes[0]):
+        if valTS == None or valTS > np.max(fes[0]) or valTS < np.min(fes[0]):
             iTS = np.argmax(fes[1])
         else:
-            iTS = indexTS
-        # TS=np.argmax(val[:int(len(val)/4)])
-
+            iTS = min(range(len(fes[0])), key=lambda i: abs(fes[0][i]-valTS))
+     
         if error == None:
             error = 1 / self.beta
 
@@ -959,6 +963,7 @@ class tsAnalysis:
 
             else:
                 hist,midBins = np.array([]), np.array([])
+                velEnsemble=[]
 
             # Zip it nicely. Discard original histogram bins h[1]
             globHist.append(zip(midBins,[h[0] for h in hist]))
@@ -996,13 +1001,16 @@ def testAll():
     #plt.show()
 
 
-    #tsa = tsAnalysis('/home/federico/Giulio/pptis_test')     
+    tsa = tsAnalysis('/home/federico/Giulio/pptis_test')     
 
-    #tsa.getProbabilities()
-    #tsa.getCrossings(0.5) 
+    tsa.getProbabilities()
+    tsa.getCrossings(1.25) 
 
-    #plumed2List('/home/federico/Giulio/pptis_test/fes.dat'):
-    #tsa.getRates(fesList) 
+    fesList=plumed2List('/home/federico/Giulio/pptis_test/fes.dat')
+
+    tsa.getRates(fesList,valTS=1.25) 
+
+    a,b= tsa.endPointVel()
 
 if __name__ == "__main__":
 
