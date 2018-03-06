@@ -29,7 +29,7 @@ A number of utility scripts are provided in the utils folder. Here is an example
 First run the setup script to prepare all the necessary files, by giving as input information on the system (topology, coordinates, etc...) and the location of your local gromacs installation::
 
     tsSetup.py -top topol.top -gro system.gro -mdp md.mdp -gmx /usr/bin/gmx
-    -win windowsList.dat -xtc traj.xtc -col COLVAR
+               -win windowsList.dat -xtc traj.xtc -col COLVAR
 
 The script will automatically store the information in a file (default: init.info) that is required to run the next set of scripts.
 
@@ -98,8 +98,8 @@ Alternatively, you can use the library functions in a python script:, which give
 Contributors
 -------------
 
-Federico Comitani (f.comitani@ucl.ac.uk)
-Giulio Mattedi (g.mattedi.16@ucl.ac.uk)
+- Federico Comitani (f.comitani@ucl.ac.uk)
+- Giulio Mattedi (g.mattedi.16@ucl.ac.uk)
 
 .. When using TS-PPTIS,  please cite
 .. G.Mattedi, F.Comitani ... F.L.Gervasio ...
