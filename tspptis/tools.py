@@ -22,6 +22,21 @@ import re
 # Used as cdw in Popen
 cwd = os.getcwd()
 
+def sigmoid(x,ref=0.0,beta=1.0):
+    """A simple sigmoid function.
+
+    Args:
+        x (float):  input value to transform
+        ref (float, optional): horizontal offset parameter
+        beta (float, optional): function slope parameter
+
+    Returns:
+        (float): value of the sigmoid function at the input point
+    """
+   
+    if beta*(x-ref)>np.log(9999): return 0
+    return 1-1/(1+np.exp(beta*(x-ref)))
+
 
 def convInt(text):
     """Takes an input and returns it as itself or as int if it's a digit.

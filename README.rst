@@ -92,7 +92,7 @@ Alternatively, you can use the library functions in a python script:, which give
 
     #If desired, check the Memory Loss Assumption
     tsa.endPointVel()
-    tsa.checkMLA()
+    tsa.checkMLA(plot=True)
 
 
 Contributors

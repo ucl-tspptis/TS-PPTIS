@@ -56,5 +56,5 @@ if __name__ == "__main__":
     """Check Memory Loss Assumption."""
 
     tsa.endPointVel()
-    tsa.checkMLA()
+    tsa.checkMLA(plot=True)
 

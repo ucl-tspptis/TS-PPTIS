@@ -635,6 +635,8 @@ class tsAnalysis:
         self.crossInfo=[]
         self.probInfo=[]
 
+        self.velEnsemble=[]
+
         self.pathToFiles=folderName
 
 
@@ -796,7 +798,6 @@ class tsAnalysis:
 
             fes (list (floats)): list containing the X and Y values of the calculated
                 free energy
-            ##We need to decide which format we want... for now list
             Astate (int, optional): index of the A state along the FES, if none provided
                 assume minimum free energy point
             Bstate (int, optional): index of the B state along the FES, if none provided
@@ -888,24 +889,18 @@ class tsAnalysis:
             "%.3e" % kABupp +" "+ "%.3e" % kBAupp)
 
 
-    def endPointVel(self, folderName='',bins=10):
+    def endPointVel(self, folderName=''):
         """ Calculates the --/+- and -+/+- end point velocity distribution for each window.
-            Can be used to check for the vality of the memory loss assumption
-
-            Args:
-                folderName (string): folder containing the TS-PPTIS windows' folders
-                bins (int):          number of histogram bins
-
-            Returns:
-                globHist (nested list):         Nx2x2 list with the following axes:
-                                                    0: window
-                                                    1: *- / *+ ensemble
-                                                    2: end point velocity
-                                                       histogram bins and counts
-                globVelEnsemble (nested list): Nx2 list with the following axes:
+            Can be used to check for the vality of the memory loss assumption. 
+            The data is then stored in self.velEnsembl in the following format.
+                
+                eelEnsemble (nested list): Nx2 list with the following axes:
                                                     0: window
                                                     1: *-/*+ end point velocity
                                                        list
+
+            Args:
+                folderName (string): folder containing the TS-PPTIS windows' folders.
         """
 
         # List windows' folders
@@ -918,7 +913,7 @@ class tsAnalysis:
         listFold = sorted(listFold, key=natural_keys)
 
 
-        globHist, globVelEnsemble = [],[]
+        globVelEnsemble = []
         for window in listFold:
             # for each folder list info files
             listPar=[]
@@ -954,41 +949,109 @@ class tsAnalysis:
 
             endPointVel = np.array(endPointVel)
 
-
-
             if len(endPointVel) > 0:
                 # *- and *+ end point velocities 
-                velEnsemble = (endPointVel[endPointVel[:,0] == 0,1], endPointVel[endPointVel[:,0] == 1,1])
+                velEnsemble = (endPointVel[endPointVel[:,0] == 0,1],\
+                               endPointVel[endPointVel[:,0] == 1,1])
 
                 #*****TESTING*******
-                # velEnsemble = np.random.random(size=1000).reshape([2,500])
-                #******************
-
-                # For each ensemble calculate the histogram
-                hist = [np.histogram(x,bins=bins) if len(x)>0 else ([],[]) for x in velEnsemble]
-                # NumPy returns the bins' bounds, not centers. Calculate midpoints
-                midBins = [[(h[1][x+1] + h[1][x])/2 for x in range(len(h[1])-1)] if len(h[0])>0 else [] for h in hist]
-
+                #velEnsemble = np.random.random(size=1000).reshape([2,500])
+                #******i************
             else:
-                hist,midBins = np.array([]), np.array([])
                 velEnsemble=[]
 
-            # Zip it nicely. Discard original histogram bins h[1]
+            self.velEnsemble.append(velEnsemble)
+
+
+    def checkMLA(self, bins=10, plot=False):
+        """ Tests the memory loss assumption against the data.
+
+            Args:
+                bins (int, optional): number of histogram bins.
+                plot (bool, optional): activate/deactivate the option to save the
+                    histograms' plots
+
+
+          Returns:
+                globHist (nested list): Nx2x2 list with the following axes:
+                                                    0: window
+                                                    1: *- / *+ ensemble
+                                                    2: end point velocity
+                                                       histogram bins and counts
+        """
+
+        globHist=[]
+        # For each ensemble calculate the histogram
+        for ens in self.velEnsemble:
+            if ens!=[]:
+                #Shouldn't we normalise them?
+                hist=[np.histogram(x,bins=bins,normed=True) if len(x)>0 else ([],[])\
+                                  for x in ens]
+                # Get bins midpoints, not sure if needed
+                midBins=[[(h[1][x+1] + h[1][x])/2 for x in range(len(h[1])-1)]\
+                            if len(h[0])>0 else [] for h in hist]
+            else:
+               hist,midBins = np.array([]), np.array([])
+
             globHist.append(zip(midBins,[h[0] for h in hist]))
-            globVelEnsemble.append(velEnsemble)
 
-        return globHist, globVelEnsemble
+        if plot==True:
+
+            import matplotlib.pyplot as plt
+            #add matplotlib to the requirements
+            fig, ax = plt.subplots(len(globHist), 1, sharex=True, figsize=(5,2.5*len(globHist)))
+
+            for i in range(len(globHist)): 
+                if globHist[i]!=[]:
+                    ax[i].bar(globHist[i][0][0],globHist[i][0][1],alpha=0.4,color='#7daed8')
+                    ax[i].bar(globHist[i][1][0],globHist[i][1][1],alpha=0.4,color='#d87d7d')
+
+            plt.xlabel(r'Velocity (nm/s)', labelpad=8, fontsize=20) #check units
+            #add ticks size etc...
+            plt.tight_layout()
+            #plt.show()
+            plt.savefig(self.pathToFiles+'MLA.png', dpi=300)
 
 
-        #TODO: add function to automatically check memory loss
+        #Here I'm making up a way to automatically check MLA, we should talk about this
 
+        """ Chi-squared """
+        chiSq=[]
+        for window in globHist:
+            if window!=[]:
+                sigma=0
+                for  i in range(len(window[0][0])):
+                    sigma=sigma+(window[1][1][i]-window[0][1][i])\
+                               *(window[1][1][i]-window[0][1][i])\
+                               /(window[1][1][i]+window[0][1][i])
+                chiSq.append(sigma/2)
+       
+        chiSq=[sigmoid(cs,ref=0.5,beta=10) for cs in chiSq] #Arbitrary!
+
+
+        print('MLA Test: Velocities Distribution Similarity\n'+\
+              '--------------------------------------------\n'+\
+              '\nOverlap per window')
+        for cs in chiSq:
+            print('{:.2f}'.format((1.0-cs)*100.0)+'%')
+        print('\nAverage Overlap\n'+\
+            '{:.2f}'.format((1.0-np.mean(chiSq))*100.0)+'%\n')
+
+        mla=False
+        if (np.mean(chiSq))<0.05: mla=True    #Arbitrary!
+        
+
+        print('---------\nMLA: '+str(mla)+'\n---------')
+              	  
+
+        return globHist
 
 def testAll():
     """ Runs a standard set of commands to test the correct functioning of TS-PPTIS. """
 
     # Test initialisation
     #ts = tsSetup('../testfiles/topol.top',
-    #             '../testfiles/system.gro',
+    #             '../testfiles/system.gro'
     #             '../testfiles/md.mdp',
     #              gmx='/usr/bin/gmx')
     #ts.initWindow('../testfiles/pptis20',
@@ -1011,14 +1074,16 @@ def testAll():
 
     tsa = tsAnalysis('/home/federico/Giulio/pptis_test')     
 
-    tsa.getProbabilities()
-    tsa.getCrossings(1.25) 
+ #   tsa.getProbabilities()
+#    tsa.getCrossings(1.25) 
 
-    fesList=plumed2List('/home/federico/Giulio/pptis_test/fes.dat')
+  #  fesList=plumed2List('/home/federico/Giulio/pptis_test/fes.dat')
 
-    tsa.getRates(fesList,valTS=1.25) 
+   # tsa.getRates(fesList,valTS=1.25) 
 
-    a,b= tsa.endPointVel()
+    tsa.endPointVel()
+    hist=tsa.checkMLA(plot=True)
+
 
 if __name__ == "__main__":
 
