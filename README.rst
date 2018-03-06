@@ -13,11 +13,6 @@ Juraszek J, Saladino G, van Erp TS, and Gervasio FL, "Efficient numerical recons
 
 .. The package is now available on PyPI, to retrieve it just type ``pip install tspptisM`` or download it from here and install with ``python setup.py install``.
 
-It allows to build and train SOM on your dataset, save/load the trained network weights, and display or print graphs 
-of the network with selected features. 
-The function ``run_colorsExample()`` will run a toy model, where a number of colors will be mapped from the 3D
-RGB space to the 2D network map and clustered according to their similarity in the origin space.
-
 The code has been tested on Python 2.7 and Python 3.3
 
 Dependencies
