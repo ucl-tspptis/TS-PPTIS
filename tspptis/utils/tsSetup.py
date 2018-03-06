@@ -15,10 +15,11 @@ import tspptis as tsp
 import argparse
 
 if __name__ == "__main__":
-    "Run a standard TS-PPTIS setup sequence parsing inputs from command line."
+    """Run a standard TS-PPTIS setup sequence parsing inputs from command line."""
 
 
-    #Parse command line input
+    """Parse command line input."""
+
     parser = argparse.ArgumentParser(description="TS-PPTIS v2.0 Setup Utility",
         formatter_class=lambda prog: argparse.HelpFormatter(prog,max_help_position=35))
     parser.add_argument("-top",help="system topology (gromacs format)", default="./topol.top")
@@ -32,7 +33,8 @@ if __name__ == "__main__":
     parser.add_argument("-info",help="file where input data will be stored", default="./init.info")
     args = parser.parse_args()
 
-    # Save input to a file 
+    """Save input to a file."""
+
     # Not sure if this is a good idea, but it will save time
     # when setupping and finilizing the windows iteratively
     info=open(args.info,'w')
@@ -41,14 +43,16 @@ if __name__ == "__main__":
                args.mdp+'\n'+\
                args.gmx)
 
-    # Initialize tsSetup
+    """Initialize tsSetup."""
+
     ts = tsp.tsSetup(args.top,
                  args.gro,
                  args.mdp,
                  args.gmx)
 
-    #Automatically set up windows from a file
-    i=0
+   """Automatically set up windows from a file."""
+ 
+   i=0
     for line in open(args.win,'r'):
         i+=1
         line=line.split('[,]')
@@ -58,6 +62,8 @@ if __name__ == "__main__":
                       args.xtc,
                       args.col,
                       overwrite=True)
+
+        """ Setup the simulation files for the specific window."""
 
         ts.setUpTPS(args.fold+'/pptis'+'{:02}'.format(i))
 

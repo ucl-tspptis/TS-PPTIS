@@ -864,20 +864,28 @@ class tsAnalysis:
         # Add also the times tau...
         if printFile == True:
             f = open(self.pathToFiles+'RatesOutput.dat', 'w')
-            f.write("Rates in s^-1")
-            f.write("%.3e" % kAB, "%.3e" % kBA)
-            f.write("\nRates low")
-            f.write("%.3e" % kABlow, "%.3e" % kBAlow)
-            f.write("\nRates upp")
-            f.write("%.3e" % kABupp, "%.3e" % kBAupp)
+            f.write("RATES\n"+\
+            "-----\n"+\
+            "kOff [s^-1]  kOn [s^-1]\n\n"+\
+            "%.3e" % kAB +" "+ "%.3e" % kBA+"\n"+\
+            "\nLower Bound\n"+\
+            "-----------\n"+\
+            "%.3e" % kABlow +" "+ "%.3e" % kBAlow+"\n"+\
+            "\nUpper Bound\n"+\
+            "-----------\n"+\
+            "%.3e" % kABupp +" "+ "%.3e" % kBAupp)
             f.close()
 
-        print("\nRates in s^-1")
-        print("%.3e" % kAB, "%.3e" % kBA)
-        print("\nRates low")
-        print("%.3e" % kABlow, "%.3e" % kBAlow)
-        print("\nRates upp")
-        print("%.3e" % kABupp, "%.3e" % kBAupp)
+        print("RATES\n"+\
+            "-----\n"+\
+            "kOff [s^-1]  kOn [s^-1]\n\n"+\
+            "%.3e" % kAB +" "+ "%.3e" % kBA+"\n"+\
+            "\nLower Bound\n"+\
+            "-----------\n"+\
+            "%.3e" % kABlow +" "+ "%.3e" % kBAlow+"\n"+\
+            "\nUpper Bound\n"+\
+            "-----------\n"+\
+            "%.3e" % kABupp +" "+ "%.3e" % kBAupp)
 
 
     def endPointVel(self, folderName='',bins=10):
