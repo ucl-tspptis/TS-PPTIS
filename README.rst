@@ -47,7 +47,7 @@ To finalize a single run and setup the next iteration, ``tsFinalize.py`` and ``t
     tsFinalize.py -info init.info -fold pptis00
     tsSetRun.py -info init.info -fold pptis00
 
-A standard analysis worfklow is available in ``tsAnalysis.py``, which requiresthe path to the tspptis windows folders, a free energy profile (in Plumed 2 format), and an estimate of the TS. If none provided, the FES maximum will be taken as TS::
+A standard analysis worfklow is available in ``tsAnalysis.py``, which requires the path to the tspptis windows folders, a free energy profile (in Plumed 2 format), and an estimate of the TS. If none provided, the FES maximum will be taken as TS::
 
     tsAnalysis.py -trans 1.55 -fold ./ -fes fes.dat 
 
