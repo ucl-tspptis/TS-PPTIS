@@ -984,17 +984,17 @@ class tsAnalysis:
         # For each ensemble calculate the histogram
         for ens in self.velEnsemble:
             if ens!=[]:
-                #Shouldn't we normalise them?
+                #check this normalization...
                 hist=[np.histogram(x,bins=bins,normed=True) if len(x)>0 else ([],[])\
                                   for x in ens]
-                # Get bins midpoints, not sure if needed
+                # Get bins midpoints, not needed
                 midBins=[[(h[1][x+1] + h[1][x])/2 for x in range(len(h[1])-1)]\
                             if len(h[0])>0 else [] for h in hist]
             else:
                hist,midBins = np.array([]), np.array([])
 
             globHist.append(zip(midBins,[h[0] for h in hist]))
-
+        
         if plot==True:
 
             import matplotlib.pyplot as plt
@@ -1010,7 +1010,7 @@ class tsAnalysis:
             #add ticks size etc...
             plt.tight_layout()
             #plt.show()
-            plt.savefig(self.pathToFiles+'MLA.png', dpi=300)
+            plt.savefig(self.pathToFiles+'/MLA.png', dpi=300)
 
 
         #Here I'm making up a way to automatically check MLA, we should talk about this
@@ -1021,14 +1021,19 @@ class tsAnalysis:
             if window!=[]:
                 sigma=0
                 for  i in range(len(window[0][0])):
-                    sigma=sigma+(window[1][1][i]-window[0][1][i])\
-                               *(window[1][1][i]-window[0][1][i])\
-                               /(window[1][1][i]+window[0][1][i])
+                    if window[1][1][i]+window[0][1][i]==0:
+                       continue
+                    else:
+                        sigma=sigma+(window[1][1][i]-window[0][1][i])\
+                                   *(window[1][1][i]-window[0][1][i])\
+                                   /(window[1][1][i]+window[0][1][i])
                 chiSq.append(sigma/2)
+
        
         chiSq=[sigmoid(cs,ref=0.5,beta=10) for cs in chiSq] #Arbitrary!
 
 
+        print(chiSq)
         print('MLA Test: Velocities Distribution Similarity\n'+\
               '--------------------------------------------\n'+\
               '\nOverlap per window')
@@ -1072,14 +1077,17 @@ def testAll():
     #plt.show()
 
 
-    tsa = tsAnalysis('/home/federico/Giulio/pptis_test')     
+    tsa = tsAnalysis('/home/federico/Giulio/pptis_test2')     
 
- #   tsa.getProbabilities()
-#    tsa.getCrossings(1.25) 
+    #tsa.getProbabilities()
 
-  #  fesList=plumed2List('/home/federico/Giulio/pptis_test/fes.dat')
+    #fesList=plumed2List('/home/federico/Giulio/pptis_test/fesfake.dat')
+    #iTS = np.argmax(fesList[1][:int(len(fesList[1])/2)])
+    #trans=fesList[0][iTS]
+    #print(trans)
+    #tsa.getCrossings(trans) 
 
-   # tsa.getRates(fesList,valTS=1.25) 
+    #tsa.getRates(fesList,valTS=trans) 
 
     tsa.endPointVel()
     hist=tsa.checkMLA(plot=True)

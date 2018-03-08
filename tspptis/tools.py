@@ -34,7 +34,7 @@ def sigmoid(x,ref=0.0,beta=1.0):
         (float): value of the sigmoid function at the input point
     """
    
-    if beta*(x-ref)>np.log(9999): return 0
+    if beta*(x-ref)>np.log(9999): return 1
     return 1-1/(1+np.exp(beta*(x-ref)))
 
 
