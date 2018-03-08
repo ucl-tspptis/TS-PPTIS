@@ -13,6 +13,7 @@ G. Mattedi: giulio.mattedi.16@ucl.ac.uk
 #import __init__ as tsp
 import tspptis as tsp
 import argparse
+import numpy as np
 
 if __name__ == "__main__":
     """Run a standard TS-PPTIS setup sequence parsing inputs from command line."""
@@ -25,6 +26,7 @@ if __name__ == "__main__":
     parser.add_argument("-top",help="system topology (gromacs format)", default="./topol.top")
     parser.add_argument("-gro",help="system coordinates (gromacs format)", default="./system.gro")
     parser.add_argument("-mdp",help="simulation parameters file (gromacs format)", default="./md.mdp")
+    parser.add_argument("-ndx",help="index file (gromacs format, optional)", default="")
     parser.add_argument("-gmx",help="gromacs executable", default="/usr/bin/gmx")
     parser.add_argument("-fold",help="pptis windows output folder", default="./")
     parser.add_argument("-win",help="windows list file", default="./winList.dat")
@@ -41,23 +43,27 @@ if __name__ == "__main__":
     info.write(args.top+'\n'+\
                args.gro+'\n'+\
                args.mdp+'\n'+\
-               args.gmx)
+               args.ndx+'\n'+\
+               args.gmx+'\n')
 
     """Initialize tsSetup."""
 
-    ts = tsp.tsSetup(args.top,
-                 args.gro,
-                 args.mdp,
-                 args.gmx)
+    print args.gmx
 
-   """Automatically set up windows from a file."""
+    ts = tsp.tsSetup(top=args.top,
+                 gro=args.gro,
+                 mdp=args.mdp,
+                 ndx=args.ndx,
+                 gmx=args.gmx)
+
+    """Automatically set up windows from a file."""
  
-   i=0
+    i=0
     for line in open(args.win,'r'):
         i+=1
-        line=line.split('[,]')
+        line=line.split(',')
         line=[np.float(l) for l in line]
-        ts.initWindow(args.fold+'/pptis'+'{:02}'.format(i),
+        ts.initWindow(args.fold+'/pptis'+'{:<02}'.format(i),
                       line,
                       args.xtc,
                       args.col,
@@ -65,5 +71,5 @@ if __name__ == "__main__":
 
         """ Setup the simulation files for the specific window."""
 
-        ts.setUpTPS(args.fold+'/pptis'+'{:02}'.format(i))
+        ts.setUpRun(args.fold+'/pptis'+'{:<02}'.format(i))
 

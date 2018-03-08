@@ -28,7 +28,7 @@ A number of utility scripts are provided in the utils folder. Here is an example
 
 First run the setup script to prepare all the necessary files, by giving as input information on the system (topology, coordinates, etc...) and the location of your local gromacs installation::
 
-    tsSetup.py -top topol.top -gro system.gro -mdp md.mdp -gmx /usr/bin/gmx
+    tsSetup.py -top topol.top -gro system.gro -mdp md.mdp -ndx index.ndx -gmx /usr/bin/gmx
                -win windowsList.dat -xtc traj.xtc -col COLVAR
 
 The script will automatically store the information in a file (default: init.info) that is required to run the next set of scripts.
@@ -64,6 +64,7 @@ Alternatively, you can use the library functions in a python script:, which give
     ts = tsSetup('./topol.top',
                  './system.gro',
                  './md.mdp',
+                 './index.ndx',
                  gmx='/usr/bin/gmx')
         
     #Initialise a single window

@@ -27,11 +27,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     """Re-initialize tsSetup."""
-    info=open(args.info,'r') 
-    ts = tsp.tsSetup(info[0],
-                 info[1],
-                 info[2],
-                 info[3])
+    info=[line.strip() for line in open(args.info,'r').readlines()]
+    ts = tsp.tsSetup(top=info[0],
+                 gro=info[1],
+                 mdp=info[2],
+                 ndx=info[3],
+                 gmx=info[4])
 
     """Finalize the run."""
 
