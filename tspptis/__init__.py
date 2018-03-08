@@ -234,7 +234,7 @@ class tsSetup:
 
 
 
-    def setupRun(self, path):
+    def setUpRun(self, path):
         """Setup a single TPS run
 
         Args:
