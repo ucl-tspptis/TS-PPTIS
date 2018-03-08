@@ -69,7 +69,7 @@ Alternatively, you can use the library functions in a python script:, which give
         
     #Initialise a single window
     ts.initWindow('./pptis10',
-                  1.5:1.7:1.9,
+                  [1.5,1.7,1.9],
                  './traj_fixed.xtc',
                   './COLVAR',
                    overwrite=True)
