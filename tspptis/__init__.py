@@ -702,6 +702,9 @@ class tsAnalysis:
 
             dataRej.close()
             
+
+            #check ppm pmm pmp ppp order as it may be wrong!
+
             if 'AB' not in dState or 'AA' not in dState:
                 #not sure why the second condition is necessary...
                 ppm=float('inf')
@@ -728,7 +731,8 @@ class tsAnalysis:
 
 
     def getCrossings(self, tsLambda, folderName=''):
-        """Reads par files produced by ts-pptis and extracts information on crossing events         at the TS to be used by getRates.
+        """Reads par files produced by ts-pptis and extracts information on crossing eventsi
+        at the TS to be used by getRates.
 
         Args:
 
@@ -814,7 +818,7 @@ class tsAnalysis:
 
         """
 
-        if Bstate == -1:
+        if Astate == -1:
             As = np.argmin(fes[1])
         else:
             As = Astate
@@ -823,6 +827,7 @@ class tsAnalysis:
             Bs = len(fes[1])-1
         else:
             Bs = Bstate
+
         if valTS == None or valTS > np.max(fes[0]) or valTS < np.min(fes[0]):
             iTS = np.argmax(fes[1])
         else:
