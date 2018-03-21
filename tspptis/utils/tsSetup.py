@@ -69,7 +69,7 @@ if __name__ == "__main__":
                       args.col,
                       overwrite=True)
 
-        """ Setup the simulation files for the specific window."""
-
-        ts.setUpRun(args.fold+'/pptis'+'{:<02}'.format(i))
+        #""" Setup the simulation files for the specific window."""
+        # Setting up the run is not needed at this point
+        #ts.setUpRun(args.fold+'/pptis'+'{:<02}'.format(i))
 
