@@ -381,7 +381,7 @@ class tsSetup:
             self.top, pathTree['temp'] + 'fw.tpr', path + 'temp/mdout.mdp')
 
         # Use ndx if specified
-        if self.ndx != '': cmd += '-n ' + self.ndx
+        if self.ndx != '': cmd += ' -n ' + self.ndx
 
         runGmx(cmd, gmxLog, 'Generating TPR file for FW replica')
 
@@ -390,7 +390,7 @@ class tsSetup:
             self.top, pathTree['temp'] + 'bw.tpr', path + 'temp/mdout.mdp')
 
         # Use ndx if specified
-        if self.ndx != '': cmd += '-n ' + self.ndx
+        if self.ndx != '': cmd += ' -n ' + self.ndx
 
         runGmx(cmd, gmxLog, 'Generating TPR file for BW replica')
 
