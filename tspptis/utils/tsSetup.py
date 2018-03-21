@@ -63,7 +63,7 @@ if __name__ == "__main__":
         i+=1
         line=line.split(',')
         line=[np.float(l) for l in line]
-        ts.initWindow(args.fold+'/pptis'+'{:<02}'.format(i),
+        ts.initWindow(args.fold+'/pptis'+'{:02}'.format(i),
                       line,
                       args.xtc,
                       args.col,
@@ -71,5 +71,5 @@ if __name__ == "__main__":
 
         #""" Setup the simulation files for the specific window."""
         # Setting up the run is not needed at this point
-        #ts.setUpRun(args.fold+'/pptis'+'{:<02}'.format(i))
+        #ts.setUpRun(args.fold+'/pptis'+'{:02}'.format(i))
 
