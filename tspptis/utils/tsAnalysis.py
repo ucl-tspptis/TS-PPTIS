@@ -30,11 +30,11 @@ if __name__ == "__main__":
     """Initialize tsAnalysis."""
 
     tsa = tsp.tsAnalysis(args.fold)
-   
+
     """Extract Probabilities."""
 
     tsa.getProbabilities()
-   
+
     """Change Fes Format."""
 
     fesLists=tsp.plumed2List(arg.fes)
@@ -51,7 +51,7 @@ if __name__ == "__main__":
 
     """Extract Rates."""
 
-    tsa.getRates(fesList, valTS=args.trans) 
+    tsa.getRates(fesList, valTS=args.trans)
 
     """Check Memory Loss Assumption."""
 
