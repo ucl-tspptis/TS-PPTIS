@@ -331,15 +331,15 @@ class tsSetup:
         # Define shooting point and dump gro file
         point = shootingPoint(prevRun + '.cv', config['interfaces'])
 
-        printLine('Shooting point', point[1])
-        printLine('Shooting frame', point[0])
-        printLine('Shooting frame LPF', point[2])
-
         # Extract selected frame from previous trajectory
-        extractFrame(point[1], prevTraj, self.gro,
+        actual_point = extractFrame(point[1], prevTraj, self.gro,
                      prevRun + '.cv', pathTree['temp'] + 'frame.gro',
                      trajStride=config[prevTrajExt[1:] + '_stride'],
                      colvarStride=config['colvar_stride'])
+
+        printLine('Shooting point', '%.2f -> %.2f' % (point[1], actual_point[1]))
+        printLine('Shooting frame', '%d -> %d' % (point[0], actual_point[0]))
+        printLine('Shooting frame LPF', point[2])
 
         print('\nInitialising FW replica velocities...\t\t',end='')
 
@@ -479,6 +479,7 @@ class tsSetup:
 
             printLine("%s path length" % repl,"%d (%.1f ps)" % (len(replTraj[i]),len(replTraj[i])*config['timestep']*config[trajExt[1:]+'_stride']))
 
+            if len(replColvar) == 0: throwError('%s replica COLVAR length is 0')
             # Invert colvar if BW
             if repl == 'BW':
                 replColvar = replColvar[:0:-1]
