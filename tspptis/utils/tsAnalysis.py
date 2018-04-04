@@ -27,34 +27,42 @@ if __name__ == "__main__":
     parser.add_argument("-fes",help="free energy profile file (Plumed 2 format)" , default="./fes.dat")
     args = parser.parse_args()
 
+
     """Initialize tsAnalysis."""
 
+    print 'Init...'
     tsa = tsp.tsAnalysis(args.fold)
 
     """Extract Probabilities."""
 
+    print 'Calculating probabilites...'
     tsa.getProbabilities()
 
     """Change Fes Format."""
 
+    print 'Reading FES...'
     fesLists=tsp.plumed2List(arg.fes)
 
     """Find TS if none provided."""
 
     if args.trans==None:
+        print 'Finding TS...'
          iTS = np.argmax(fesList[1])
          args.trans=fesList[0][iTS]
 
     """Extract Crossings."""
 
+    print 'Calculating crossings...'
     tsa.getCrossings(args.trans)
 
     """Extract Rates."""
 
+    print 'Calculating rates...\n'
     tsa.getRates(fesList, valTS=args.trans)
 
     """Check Memory Loss Assumption."""
 
+    print '\nChecking Memory Loss Assumption...'
     tsa.endPointVel()
     tsa.checkMLA(plot=True)
 

@@ -873,7 +873,7 @@ class tsAnalysis:
             f = open(self.pathToFiles+'RatesOutput.dat', 'w')
             f.write("RATES\n"+\
             "-----\n"+\
-            "kOff [s^-1]  kOn [s^-1]\n\n"+\
+            "kOff [s^-1]  kOn [M^-1*s^-1]\n\n"+\
             "%.3e" % kAB +" "+ "%.3e" % kBA+"\n"+\
             "\nLower Bound\n"+\
             "-----------\n"+\
@@ -885,7 +885,7 @@ class tsAnalysis:
 
         print("RATES\n"+\
             "-----\n"+\
-            "kOff [s^-1]  kOn [s^-1]\n\n"+\
+            "kOff [s^-1]  kOn [M^-1*s^-1]\n\n"+\
             "%.3e" % kAB +" "+ "%.3e" % kBA+"\n"+\
             "\nLower Bound\n"+\
             "-----------\n"+\

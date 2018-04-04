@@ -264,6 +264,9 @@ def extractFrame(cvValue, trajFile, topFile, colvarFile, outFile='out.pdb', traj
         framesCV = colvar[cvEntries, 1]
         frames = cvEntries
 
+    # Handle case where multiple frames are selected
+    if len(frames) > 1: frames = frames[:1]
+
     if save:
         traj[frames].save(outFile)
 
