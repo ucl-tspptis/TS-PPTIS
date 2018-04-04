@@ -62,7 +62,7 @@ FES maximum will be taken as TS:
 
 ## Library Usage
 
-Alternatively, you can use the library functions in a python script:,
+Alternatively, you can use the library functions in a python script,
 which gives you more control on the tspptis parameters:
 
     #Import the library
