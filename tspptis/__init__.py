@@ -871,7 +871,7 @@ class tsAnalysis:
         msg = '{:>20} | {:>12} | {:>12} | {:>12}\n'.format('','Rate','Lower Bound','Upper Bound') + \
             '_'*65 + '\n' + \
             '{:<20} | {:>12} | {:>12} | {:>12}\n'.format('','','','') + \
-            '{:<20} | {:>12.3e} | {:>12.3e} | {:>12.3e}\n'.format('kOff [s^-1]',kAB,kABlow,kABupp) + \
+            '{:<20} | {:>12.3e} | {:>12.3e} | {:>12.3e}\n'.format('kOn  [M^-1 s^-1]',kBA,kBAlow,kBAupp) + \
             '{:<20} | {:>12} | {:>12} | {:>12}\n'.format('','','','') + \
             '{:<20} | {:>12.3e} | {:>12.3e} | {:>12.3e}\n'.format('kOff [s^-1]',kAB,kABlow,kABupp)
 
