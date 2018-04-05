@@ -479,7 +479,7 @@ class tsSetup:
 
             printLine("%s path length" % repl,"%d (%.1f ps)" % (len(replTraj[i]),len(replTraj[i])*config['timestep']*config[trajExt[1:]+'_stride']))
 
-            if len(replColvar) == 0: throwError('%s replica COLVAR length is 0')
+            if len(repl) == 0: throwError('%s replica COLVAR length is 0')
             # Invert colvar if BW
             if repl == 'BW':
                 replColvar = replColvar[:0:-1]
@@ -654,14 +654,15 @@ class tsAnalysis:
 
         if folderName=='': folderName=self.pathToFiles
 
-        output=open(folderName+'/probabilities.dat', 'w')
+        output=open('probabilities.dat', 'w')
         output.write('#Name\tLambda\tpmm\tppm\tpmp\tppp\n')
 
         listFold=[]
-        for fold in [x[0] for x in os.walk(folderName, topdown=True)]:
-            if fold.startswith(folderName+'/pptis')\
-                and not any(s in fold for s in ['/data','/run','/temp']): #easy to break, find alternative
+        for fold in folderName:
+            if os.path.isfile(fold+'/window.cfg'):
                     listFold.append(fold)
+
+        listFold = sorted(listFold, key=natural_keys)
 
         for window in listFold:
             target=getLambda(window)
@@ -745,13 +746,12 @@ class tsAnalysis:
 
         if folderName=='': folderName=self.pathToFiles
         
-        output=open(folderName+'/crossings.dat', 'w')                
+        output=open('crossings.dat', 'w')                
         output.write('#Shot\tMeanVelocity\t+Cross\t-Cross\tWeight\tEndingSide\n')
        
         listFold=[]
-        for fold in [x[0] for x in os.walk(folderName, topdown=True)]:
-            if fold.startswith(folderName+'/pptis')\
-                and not any(s in fold for s in ['/data','/run','/temp']): #easy to break, find alternative
+        for fold in folderName:
+            if os.path.isfile(fold+'/window.cfg'):
                     listFold.append(fold)
 
         lambdas=[]
@@ -867,32 +867,20 @@ class tsAnalysis:
         kBAlow = PBlow * R * 1e12
         kBAupp = PBupp * R * 1e12
 
-        # FIX ALL THIS PRINTING, the folder etc...
+
+        msg = '{:>20} | {:>12} | {:>12} | {:>12}\n'.format('','Rate','Lower Bound','Upper Bound') + \
+            '_'*65 + '\n' + \
+            '{:<20} | {:>12} | {:>12} | {:>12}\n'.format('','','','') + \
+            '{:<20} | {:>12.3e} | {:>12.3e} | {:>12.3e}\n'.format('kOff [s^-1]',kAB,kABlow,kABupp) + \
+            '{:<20} | {:>12} | {:>12} | {:>12}\n'.format('','','','') + \
+            '{:<20} | {:>12.3e} | {:>12.3e} | {:>12.3e}\n'.format('kOff [s^-1]',kAB,kABlow,kABupp)
+
+        print(msg)
         # Add also the times tau...
         if printFile == True:
             f = open(self.pathToFiles+'RatesOutput.dat', 'w')
-            f.write("RATES\n"+\
-            "-----\n"+\
-            "kOff [s^-1]  kOn [M^-1*s^-1]\n\n"+\
-            "%.3e" % kAB +" "+ "%.3e" % kBA+"\n"+\
-            "\nLower Bound\n"+\
-            "-----------\n"+\
-            "%.3e" % kABlow +" "+ "%.3e" % kBAlow+"\n"+\
-            "\nUpper Bound\n"+\
-            "-----------\n"+\
-            "%.3e" % kABupp +" "+ "%.3e" % kBAupp)
+            f.write(msg)
             f.close()
-
-        print("RATES\n"+\
-            "-----\n"+\
-            "kOff [s^-1]  kOn [M^-1*s^-1]\n\n"+\
-            "%.3e" % kAB +" "+ "%.3e" % kBA+"\n"+\
-            "\nLower Bound\n"+\
-            "-----------\n"+\
-            "%.3e" % kABlow +" "+ "%.3e" % kBAlow+"\n"+\
-            "\nUpper Bound\n"+\
-            "-----------\n"+\
-            "%.3e" % kABupp +" "+ "%.3e" % kBAupp)
 
 
     def endPointVel(self, folderName=''):
@@ -912,9 +900,8 @@ class tsAnalysis:
         # List windows' folders
         if folderName=='': folderName=self.pathToFiles
         listFold=[]
-        for fold in [x[0] for x in os.walk(folderName, topdown=True)]:
-            if fold.startswith(folderName+'/pptis')\
-                and not any(s in fold for s in ['/data','/run','/temp']): #easy to break, find alternative
+        for fold in folderName:
+            if os.path.isfile(fold+'/window.cfg'):
                     listFold.append(fold)
         listFold = sorted(listFold, key=natural_keys)
 
