@@ -58,7 +58,7 @@ requires the path to the tspptis windows folders, a free energy profile
 (in Plumed 2 format), and an estimate of the TS. If none provided, the
 FES maximum will be taken as TS:
 
-    tsAnalysis.py -trans 1.55 -fold ./ -fes fes.dat 
+    tsAnalysis.py -trans 1.55 -fes fes.dat pptis*/
 
 ## Library Usage
 
