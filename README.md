@@ -13,7 +13,7 @@ numerical reconstruction of protein folding kinetics with partial path
 sampling and pathlike variables.\" Phys Rev Lett. 2013 Mar
 8;110(10):108106.
 
-The code has been tested on Python 2.7 and Python 3.3
+The code has been tested on Python 2.7.
 
 ## Dependencies
 
