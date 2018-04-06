@@ -30,10 +30,12 @@ if __name__ == "__main__":
     folderList = natural_sort(args.fold)
 
 
-    header = 'WINDOW\t\tLAMBDA\t\t     TOT     ACC     REJ      AA      AB      BA      BB   ACC_LEN [ns]   REJ_LEN [ns]'
 
+    header = '{:15s} {:20s} {:>7s} {:>7s} {:>7s} {:>7s} {:>7s} {:>7s} {:>7s} {:>15s}{:>15s}'.format('WINDOW','LAMBDA','TOT','ACC','REJ','AA','AB','BA','BB','ACC_LEN [ns]','REJ_LEN [ns]')
     print header
-    print '_'*120 + '\n'
+    print '_'*len(header) + '\n'
+
+    totals = []
 
     for folder in folderList:
         if not os.path.isfile(folder+'/window.cfg'): continue
@@ -64,7 +66,7 @@ if __name__ == "__main__":
             )
         name = filter(None, folder.split('/'))[-1]
 
-        print '%s\t\t%s\t %7d %7d %7d %7d %7d %7d %7d %11.3f %11.3f' % (
+        print '{:15s} {:20s} {:7d} {:7d} {:7d} {:7d} {:7d} {:7d} {:7d} {:15.3f}{:15.3f}'.format(
                     name,
                     window,
                     acc+rej,
@@ -73,4 +75,19 @@ if __name__ == "__main__":
                     count[0],count[1],count[2],count[3],
                     acc_length,
                     rej_length)
+        totals.append([acc+rej,acc,rej,count[0],count[1],count[2],count[3],acc_length,rej_length])
 
+    print '_'*len(header)
+    totals = np.sum(totals,axis=0, dtype=float)
+    print '{:15s} {:20s} {:7} {:7} {:7} {:7} {:7} {:7} {:7} {:15.3f}{:15.3f}'.format(
+            'TOTAL','',
+            int(totals[0]),
+            int(totals[1]),
+            int(totals[2]),
+            int(totals[3]),
+            int(totals[4]),
+            int(totals[5]),
+            int(totals[6]),
+            totals[7],
+            totals[8]
+            )
