@@ -45,13 +45,19 @@ set up needs to be included. The format should be:
 with each line containing a floating point representing the position of
 the left, centre and right window bounds, separated by a comma.
 
-With `tsSetup.py` the tspptis simulation is ready to run. To finalize a
-single run and setup the next iteration, `tsFinalize.py` and
-`tsSetRun.py` can be used for each window, all they need is the
-`init.info` and the tspptis window folder:
+With `tsSetup.py` the TS-PPTIS windows are created. To set up a single run
+`tsSetRun.py` can be called. After running GROMACS,`tsFinalize.py`
+finalises the run in the single window. All they need is the
+`init.info` file and the tspptis window folder:
 
-    tsFinalize.py -info init.info -fold pptis00
     tsSetRun.py -info init.info -fold pptis00
+    [GROMACS]
+    tsFinalize.py -info init.info -fold pptis00
+
+During the TS-PPTIS simulations, it is possible to monitor the windows with
+the `tsReport.py` utility. E.g.:
+
+    tsReport.py pptis*/
 
 A standard analysis worfklow is available in `tsAnalysis.py`, which
 requires the path to the tspptis windows folders, a free energy profile
