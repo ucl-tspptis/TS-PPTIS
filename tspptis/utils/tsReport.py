@@ -36,9 +36,11 @@ if __name__ == "__main__":
     print '_'*len(header) + '\n'
 
     totals = []
+    printTotals = False # set to True if at least one pptis folder is found
 
     for folder in folderList:
         if not os.path.isfile(folder+'/window.cfg'): continue
+        printTotals = True
         with open(folder+'/window.cfg','r') as handle:
             window = [line.split('=')[1].strip()
                         for line in handle if 'interfaces' in line][0]
@@ -77,17 +79,18 @@ if __name__ == "__main__":
                     rej_length)
         totals.append([acc+rej,acc,rej,count[0],count[1],count[2],count[3],acc_length,rej_length])
 
-    print '_'*len(header)
-    totals = np.sum(totals,axis=0, dtype=float)
-    print '{:15s} {:20s} {:7} {:7} {:7} {:7} {:7} {:7} {:7} {:15.3f}{:15.3f}'.format(
-            'TOTAL','',
-            int(totals[0]),
-            int(totals[1]),
-            int(totals[2]),
-            int(totals[3]),
-            int(totals[4]),
-            int(totals[5]),
-            int(totals[6]),
-            totals[7],
-            totals[8]
-            )
+    if printTotals:
+        print '_'*len(header)
+        totals = np.sum(totals,axis=0, dtype=float)
+        print '{:15s} {:20s} {:7} {:7} {:7} {:7} {:7} {:7} {:7} {:15.3f}{:15.3f}'.format(
+                'TOTAL','',
+                int(totals[0]),
+                int(totals[1]),
+                int(totals[2]),
+                int(totals[3]),
+                int(totals[4]),
+                int(totals[5]),
+                int(totals[6]),
+                totals[7],
+                totals[8]
+                )
