@@ -14,6 +14,7 @@ G. Mattedi: giulio.mattedi.16@ucl.ac.uk
 import tspptis as tsp
 import argparse
 import numpy as np
+import os
 
 if __name__ == "__main__":
     """Run a standard TS-PPTIS setup sequence parsing inputs from command line."""
@@ -40,11 +41,9 @@ if __name__ == "__main__":
     # Not sure if this is a good idea, but it will save time
     # when setupping and finilizing the windows iteratively
     info=open(args.info,'w')
-    info.write(args.top+'\n'+\
-               args.gro+'\n'+\
-               args.mdp+'\n'+\
-               args.ndx+'\n'+\
-               args.gmx+'\n')
+    info.write(
+            '\n'.join(
+                [os.path.abspath(f) for f in (args.top,args.gro,args.mdp,args.ndx,args.gmx)]) + '\n')
 
     """Initialize tsSetup."""
 
