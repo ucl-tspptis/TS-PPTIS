@@ -119,8 +119,18 @@ def parseTxt(colvar):
 
         outList (numpy array, float): list with time and colvar values
     """
+    with open(colvar) as handle:
+	raw = [map(float,line.strip().split())
+		for line in handle.readlines() if line[0] != '#' and line != '\n']
 
-    outList = np.loadtxt(colvar)  # switched to np.loadtxt. More flexible
+    # Assume that the fist line is the maximum length a row can have
+    outList = np.empty(shape=(len(raw), len(raw[0])))
+    outList[:] = np.nan
+
+    # Fill the nan matrix
+    for i in range(outList.shape[0]):
+	outList[i, :len(raw[i]):] = raw[i]
+
 
     # Remove duplicate timesteps UNTESTED!
     if len(outList.shape) > 1: # Avoid error if outList has 1 row
