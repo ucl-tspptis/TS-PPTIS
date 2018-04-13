@@ -43,7 +43,7 @@ if __name__ == "__main__":
     info=open(args.info,'w')
     info.write(
             '\n'.join(
-                [os.path.abspath(f) for f in (args.top,args.gro,args.mdp,args.ndx,args.gmx)]) + '\n')
+                [os.path.abspath(f) if f !='' else f for f in (args.top,args.gro,args.mdp,args.ndx,args.gmx)]) + '\n')
 
     """Initialize tsSetup."""
 

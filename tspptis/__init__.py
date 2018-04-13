@@ -44,18 +44,18 @@ class tsSetup:
         # 1. CHECK FILES ---------------------------------------------------------
         print(sectionDelimiter("INITIALISATION"))
 
-        #Check local gromacs installation.
+        # Check local gromacs installation.
         self.gmx = findExe(gmx)
         if self.gmx != None:
-            printLine('Gromacs installation','OK')
+            printLine('Gromacs installation', 'OK')
         else:
             throwError('Error : invalid gmx path ' + gmx + '\n' +
-                     'Make sure to have a working version of gromacs 5.X installed!')
+                       'Make sure to have a working version of gromacs 5.X installed!')
 
         # Check top, gro, mdp and ndx
-        for label, filePath in zip(['top','gro','mdp', 'ndx'],[top, gro, mdp, ndx]):
+        for label, filePath in zip(['top', 'gro', 'mdp', 'ndx'], [top, gro, mdp, ndx]):
             if os.path.isfile(filePath):
-                printLine("%s file" % label,'OK')
+                printLine("%s file" % label, 'OK')
             else:
                 if label != 'ndx':
                     throwError('%s file not found: %s' % (label, filePath))
@@ -67,7 +67,6 @@ class tsSetup:
         self.top = top
         self.mdp = mdp
         self.ndx = ndx
-
 
     def initWindow(self, path, window, traj, colvar, overwrite=False, symlink=True):
         """Initialize a window
@@ -87,14 +86,14 @@ class tsSetup:
         # Check and load trajectory data.
         if os.path.isfile(traj):
             self.traj = traj
-            printLine('Trajectory file','OK')
+            printLine('Trajectory file', 'OK')
         else:
-            throwError('Trajectory file not found: '+ traj)
+            throwError('Trajectory file not found: ' + traj)
 
         # Check and load colvar file.
         if os.path.isfile(colvar):
             self.colvar = colvar
-            printLine('COLVAR file','OK')
+            printLine('COLVAR file', 'OK')
             trajColvar = parseTxt(colvar)
         else:
             throwError('COLVAR file not found: ' + colvar)
@@ -102,7 +101,6 @@ class tsSetup:
         # Check length of interface list
         if len(window) != 3:
             throwError('Wrong number of elements as window interfaces')
-
 
         # 2. CREATE FOLDER AND COPY/SYMLINK INITIAL TRAJ DATA-------------------------------
 
@@ -127,33 +125,33 @@ class tsSetup:
             else:
                 throwError('Refusing to overwrite directory')
 
-
         # Create a handy dictionary with the path folders
-        pathTree = {'path' : path,
-                      'data' : path + 'data/',
-                      'run'  : path + 'run/',
-                      'temp' : path + 'temp/'}
-        for folder in pathTree.values(): os.makedirs(folder)
+        pathTree = {'path': path,
+                    'data': path + 'data/',
+                    'run': path + 'run/',
+                    'temp': path + 'temp/'}
+        for folder in pathTree.values():
+            os.makedirs(folder)
 
         # In the data/ directory create symlinks to the initial
         # trajectory data or copy the files
         if symlink:
             os.symlink(os.path.abspath(self.traj),
-                       pathTree['data']+'00000.' + self.traj.split('.')[-1])
+                       pathTree['data'] + '00000.' + self.traj.split('.')[-1])
             os.symlink(os.path.abspath(self.colvar),
-                       pathTree['data']+'00000.cv')
+                       pathTree['data'] + '00000.cv')
         else:
             shutil.copy(self.traj,
-                       pathTree['data']+'00000.' + self.split('.')[-1])
+                        pathTree['data'] + '00000.' + self.split('.')[-1])
             shutil.copy(self.colvar,
-                       pathTree['data']+'00000.cv')
+                        pathTree['data'] + '00000.cv')
 
         # 3. COPY PLUMED CONFIGS AND MDP FOR INVERTING VELOCITIES ----------------------
 
         # Copy mdp file for generating the final TPR files.
         # The step number will be set to TMAX
         shutil.copy(os.path.abspath(self.mdp),
-                   pathTree['temp']+'md.mdp')
+                    pathTree['temp'] + 'md.mdp')
 
         # 1. Copy the plumed config file from the script directory to the
         # window directory.
@@ -166,11 +164,12 @@ class tsSetup:
             window[0])).replace('__UL__', str(window[2]))
 
         with open(path + 'run/plumed_fw.dat', 'w') as handle:
-            handle.write(committorText.replace('__COLVAR__', pathTree['run'] + 'COLVAR_FW'))
+            handle.write(committorText.replace(
+                '__COLVAR__', pathTree['run'] + 'COLVAR_FW'))
 
         with open(path + 'run/plumed_bw.dat', 'w') as handle:
-            handle.write(committorText.replace('__COLVAR__', pathTree['run'] + 'COLVAR_BW'))
-
+            handle.write(committorText.replace(
+                '__COLVAR__', pathTree['run'] + 'COLVAR_BW'))
 
         # 4. DETERMINE COLVAR/MDP STRIDES -------------------------------------------
         #    WRITE INFO TO window.cfg. INITALISE tps_acc.log
@@ -180,16 +179,16 @@ class tsSetup:
         config = {}
         config['interfaces'] = ':'.join(map(str, window))
 
-        with open(self.mdp,'r') as handle:
+        with open(self.mdp, 'r') as handle:
             for line in handle.readlines():
                 if 'nstxout-compressed' in line:
                     config['xtc_stride'] = int(line.split()[2])
                 elif 'nstxout' in line:
                     config['trr_stride'] = int(line.split()[2])
                 elif 'dt' in line:
-                    config['timestep']   = float(line.split()[2])
+                    config['timestep'] = float(line.split()[2])
 
-        with open(path+'run/plumed_bw.dat','r') as handle:
+        with open(path + 'run/plumed_bw.dat', 'r') as handle:
             for line in handle.readlines():
                 if 'print' in line.lower():
                     for arg in line.split():
@@ -202,14 +201,14 @@ class tsSetup:
         elif not 'timestep' in config:
             throwError('Timestep not found in ' + self.mdp)
         elif not 'colvar_stride' in config:
-            throwError('COLVAR stride not found in ' + pathTree['run'] + 'plumed_bw.dat')
+            throwError('COLVAR stride not found in ' +
+                       pathTree['run'] + 'plumed_bw.dat')
 
         if 'xtc_stride' in config:
-            printLine('XTC stride',config['xtc_stride'])
+            printLine('XTC stride', config['xtc_stride'])
         else:
-            printLine('TRR stride',config['trr_stride'])
+            printLine('TRR stride', config['trr_stride'])
         printLine('COLVAR stride', config['colvar_stride'])
-
 
         # write to config file
         with open(path + 'window.cfg', 'w') as handle:
@@ -220,19 +219,18 @@ class tsSetup:
             handle.write(initText)
 
         # Init tps_acc.log with data from initial trajectory
-        tpsAccEntry(path+'tps_acc.log', 0, len(trajColvar), trajColvar[0,1], 0, 'A', 'B', 0, 0, 0, 0)
+        tpsAccEntry(path + 'tps_acc.log', 0, len(trajColvar),
+                    trajColvar[0, 1], 0, 'A', 'B', 0, 0, 0, 0)
         # Hint at gromacs command for running the dynamics
 
         print('\n *** Example gromacs commands for BW and FW replicas: ***\n')
 
-        for r in ['bw','fw']:
+        for r in ['bw', 'fw']:
             print('%s mdrun -s %s.tpr -plumed %s.dat -deffnm %s ; ' % (
-                    self.gmx,
-                    pathTree['run'] + r,
-                    pathTree['run'] + 'plumed_' + r,
-                    pathTree['run'] + r))
-
-
+                self.gmx,
+                pathTree['run'] + r,
+                pathTree['run'] + 'plumed_' + r,
+                pathTree['run'] + r))
 
     def setUpRun(self, path):
         """Setup a single TPS run
@@ -252,10 +250,10 @@ class tsSetup:
             path += '/'
 
         # Create a handy dictionary with the path folders
-        pathTree = {'path' : path,
-                      'data' : path + 'data/',
-                      'run'  : path + 'run/',
-                      'temp' : path + 'temp/'}
+        pathTree = {'path': path,
+                    'data': path + 'data/',
+                    'run': path + 'run/',
+                    'temp': path + 'temp/'}
 
         # Gromacs log file. Passed to runGmx
         gmxLog = path + 'gmx.log'
@@ -264,16 +262,16 @@ class tsSetup:
         if os.path.isfile(path + 'window.cfg'):
             print(sectionDelimiter("SETUP RUN"))
         else:
-            throwError('Error: the folder does not seem to be a TS-PPTIS window')
+            throwError(
+                'Error: the folder does not seem to be a TS-PPTIS window')
 
         printLine('Setting up run in', path)
 
         continuation = False
         # Open tps_acc.log, which holds info about accepted trajectories
-        tpsAcc = parseTpsAcc(path+'tps_acc.log')
+        tpsAcc = parseTpsAcc(path + 'tps_acc.log')
         # Number of accepted trajectories
         runNumber = len(tpsAcc)
-
 
         if runNumber > 1:
             continuation = True  # The first is the initial so, > 1 is continuation
@@ -288,13 +286,13 @@ class tsSetup:
         try:
             for fileName in os.listdir(pathTree['temp']):
                 if fileName != 'md.mdp':
-                    os.remove(pathTree['temp']+fileName)
+                    os.remove(pathTree['temp'] + fileName)
 
             for fileName in os.listdir(pathTree['run']):
                 if not fileName.startswith('plumed'):
-                    os.remove(pathTree['run']+fileName)
+                    os.remove(pathTree['run'] + fileName)
         except:
-            pass # error handling is overrated
+            pass  # error handling is overrated
 
         # 2. RECOVER PREVIOUS TRAJECTORY ----------------------------------------------
 
@@ -308,40 +306,45 @@ class tsSetup:
         elif os.path.isfile(prevRun + '.trr'):
             prevTrajExt = '.trr'
         else:
-            throwError('Trajectory file not found: ' +  prevRun + ' [xtc/trr]')
-
+            throwError('Trajectory file not found: ' + prevRun + ' [xtc/trr]')
 
         # Get number of frames of the initial trajectory.
         prevTraj = md.load(prevRun + prevTrajExt, top=self.gro)
         pathLength = len(prevTraj)
-        printLine("Path length","%d (%.1f ps)" % (pathLength,
-                pathLength*config['timestep']*config[prevTrajExt[1:]+'_stride']))
-
+        printLine("Path length", "%d (%.1f ps)" % (pathLength,
+                                                   pathLength * config['timestep'] * config[prevTrajExt[1:] + '_stride']))
 
         # 3. GENERATE TPR FILES ----------------------------------------------
 
         # Define TMAX
-        tmax = (pathLength*config['timestep']*config[prevTrajExt[1:]+'_stride'])/np.random.random()
+        tmax = (pathLength * config['timestep'] *
+                config[prevTrajExt[1:] + '_stride']) / np.random.random()
 
-        printLine('TMAX:','%.3f ps' % tmax)
+        printLine('TMAX:', '%.3f ps' % tmax)
 
         # Write TMAX in mdp file:
-        setTmax(pathTree['temp']+'md.mdp', tmax, config['timestep'])
+        setTmax(pathTree['temp'] + 'md.mdp', tmax, config['timestep'])
+
+        if continuation:
+            infoFile = prevRun + '.info'
+        else:
+            infoFile = prevRun + '.cv'
 
         # Define shooting point and dump gro file
-        point = shootingPoint(prevRun + '.cv', config['interfaces'])
+        point = shootingPoint(infoFile, config['interfaces'])
 
         # Extract selected frame from previous trajectory
         actual_point = extractFrame(point[1], prevTraj, self.gro,
-                     prevRun + '.cv', pathTree['temp'] + 'frame.gro',
-                     trajStride=config[prevTrajExt[1:] + '_stride'],
-                     colvarStride=config['colvar_stride'])
+                                    infoFile, pathTree['temp'] + 'frame.gro',
+                                    trajStride=config[prevTrajExt[1:] + '_stride'],
+                                    colvarStride=config['colvar_stride'])
 
-        printLine('Shooting point', '%.2f -> %.2f' % (point[1], actual_point[1]))
+        printLine('Shooting point', '%.2f -> %.2f' %
+                  (point[1], actual_point[1]))
         printLine('Shooting frame', '%d -> %d' % (point[0], actual_point[0]))
         printLine('Shooting frame LPF', point[2])
 
-        print('\nInitialising FW replica velocities...\t\t',end='')
+        print('\nInitialising FW replica velocities...\t\t', end='')
 
         # Generate tpr for velocity generation
         cmd = '%s grompp -c %s -f %s -p %s -maxwarn 1 -o %s -po %s' % (
@@ -359,38 +362,40 @@ class tsSetup:
         print('Done')
 
         # Invert the velocities
-        print('Inverting velocities for the BW replica...\t',end='')
+        print('Inverting velocities for the BW replica...\t', end='')
 
         with open(pathTree['temp'] + 'genvel_inverted.gro', 'w') as handle:
             handle.write(
                 formatGro(
                     invertGro(
                         parseGro(pathTree['temp'] + 'genvel.gro'
-                                ))))
+                                 ))))
 
         print('Done')
 
-
-
         # Generating TPR files for FW and BW replicas
 
-        print('Generating TPR files for FW and BW replicas...\t',end='')
+        print('Generating TPR files for FW and BW replicas...\t', end='')
 
         cmd = '%s grompp -c %s -f %s -p %s -maxwarn 1 -o %s -po %s' % (
-            self.gmx, pathTree['temp'] + 'genvel.gro', pathTree['temp']+'md.mdp',
+            self.gmx, pathTree['temp'] +
+            'genvel.gro', pathTree['temp'] + 'md.mdp',
             self.top, pathTree['temp'] + 'fw.tpr', path + 'temp/mdout.mdp')
 
         # Use ndx if specified
-        if self.ndx != '': cmd += ' -n ' + self.ndx
+        if self.ndx != '':
+            cmd += ' -n ' + self.ndx
 
         runGmx(cmd, gmxLog, 'Generating TPR file for FW replica')
 
         cmd = '%s grompp -c %s -f %s -p %s -maxwarn 1 -o %s -po %s' % (
-            self.gmx, pathTree['temp'] + 'genvel_inverted.gro', pathTree['temp']+'md.mdp',
+            self.gmx, pathTree['temp'] +
+            'genvel_inverted.gro', pathTree['temp'] + 'md.mdp',
             self.top, pathTree['temp'] + 'bw.tpr', path + 'temp/mdout.mdp')
 
         # Use ndx if specified
-        if self.ndx != '': cmd += ' -n ' + self.ndx
+        if self.ndx != '':
+            cmd += ' -n ' + self.ndx
 
         runGmx(cmd, gmxLog, 'Generating TPR file for BW replica')
 
@@ -399,7 +404,6 @@ class tsSetup:
         # Moving the TPR file in the run/ subdir
         os.rename(pathTree['temp'] + 'fw.tpr', pathTree['run'] + 'fw.tpr')
         os.rename(pathTree['temp'] + 'bw.tpr', pathTree['run'] + 'bw.tpr')
-
 
     def finalizeRun(self, path):
         """Setup finalize a TPS run
@@ -419,16 +423,17 @@ class tsSetup:
             path += '/'
 
         # Create a handy dictionary with the path folders
-        pathTree = {'path' : path,
-                      'data' : path + 'data/',
-                      'run'  : path + 'run/',
-                      'temp' : path + 'temp/'}
+        pathTree = {'path': path,
+                    'data': path + 'data/',
+                    'run': path + 'run/',
+                    'temp': path + 'temp/'}
 
         # Determine whether the folder is a window by the presence of window.cfg
         if os.path.isfile(path + 'window.cfg'):
             print(sectionDelimiter("FINALIZING"))
         else:
-            throwError('Error: the folder does not seem to be a TS-PPTIS window')
+            throwError(
+                'Error: the folder does not seem to be a TS-PPTIS window')
 
         printLine('Finalizing', path)
 
@@ -437,7 +442,8 @@ class tsSetup:
         window = map(float, config['interfaces'].split(':'))
 
         # Get run number by finding highest numbered trajectory in data/ dir (+1):
-        runNumber = np.max([int(f.split('.')[0]) for f in os.listdir(pathTree['data']) if f.endswith('.cv')]) + 1
+        runNumber = np.max([int(f.split('.')[0]) for f in os.listdir(
+            pathTree['data']) if (f.endswith('.info') or f.endswith('.cv')) and not f.startswith('rej')]) + 1
 
         printLine('Run number', runNumber)
 
@@ -458,15 +464,15 @@ class tsSetup:
 
         # Load the individual trajectories first and check that the length is > 0
         bwTraj, fwTraj = [md.load(pathTree['run'] + 'bw' + trajExt, top=self.gro),
-                         md.load(pathTree['run'] + 'fw' + trajExt, top=self.gro)]
+                          md.load(pathTree['run'] + 'fw' + trajExt, top=self.gro)]
 
-        if len(bwTraj) == 0 or len(fwTraj) == 0: throwError('Length of one of trajectories is 0')
+        if len(bwTraj) == 0 or len(fwTraj) == 0:
+            throwError('Length of one of trajectories is 0')
 
         replTraj = [bwTraj[:0:-1], fwTraj]
 
         del(bwTraj)
         del(fwTraj)
-
 
         endPoint = []
         jointColvar = []
@@ -477,9 +483,11 @@ class tsSetup:
             # Load replica colvar
             replColvar = parseTxt(pathTree['run'] + 'COLVAR_' + repl)
 
-            printLine("%s path length" % repl,"%d (%.1f ps)" % (len(replTraj[i]),len(replTraj[i])*config['timestep']*config[trajExt[1:]+'_stride']))
+            printLine("%s path length" % repl, "%d (%.1f ps)" % (len(replTraj[i]), len(
+                replTraj[i]) * config['timestep'] * config[trajExt[1:] + '_stride']))
 
-            if len(repl) == 0: throwError('%s replica COLVAR length is 0')
+            if len(repl) == 0:
+                throwError('%s replica COLVAR length is 0')
             # Invert colvar if BW
             if repl == 'BW':
                 replColvar = replColvar[:0:-1]
@@ -510,16 +518,18 @@ class tsSetup:
         crossCount = np.sum(crossHist == 1), np.sum(crossHist == -1)
 
         # Determine end points of the trajectories (A/B) use T if the simulation didn't hit the interfaces
-        endPoint = ['A' if jointColvar[:,1][i] <= window[0] else 'B' if jointColvar[:,1][i] >= window[2] else 'T' for i in (0, -1)]
+        endPoint = ['A' if jointColvar[:, 1][i] <= window[0]
+                    else 'B' if jointColvar[:, 1][i] >= window[2] else 'T' for i in (0, -1)]
 
         # Accept if crossings = 0 and the trajectories reached the external interfaces (a.k.a. they were not killed by tmax)
         # Or by any other external reason
         accepted = np.logical_and(
-                        np.sum(crossCount) > 0,
-                        'T' not in endPoint)
+            np.sum(crossCount) > 0,
+            'T' not in endPoint)
 
-        printLine('Crossings (+/-)','%d, %d' % (crossCount[0], crossCount[1]))
-        printLine('Start/end side:','%s -> %s' % (endPoint[0], endPoint[1]),end ='')
+        printLine('Crossings (+/-)', '%d, %d' % (crossCount[0], crossCount[1]))
+        printLine('Start/end side:', '%s -> %s' %
+                  (endPoint[0], endPoint[1]), end='')
 
         if 'T' in endPoint:
             print(' [TMAX REACHED]')
@@ -527,7 +537,6 @@ class tsSetup:
             print()
 
         printLine('Accepted', accepted)
-
 
         # 3. WRITE OUTPUT AND ARCHIVE FILES--------------------------------------------
 
@@ -543,19 +552,18 @@ class tsSetup:
                 cross = str(int(crossHist[i]))
                 # Calculate absolute and end-point crossing speed
                 if crossHist[i] != 0 or i == 0 or i == len(crossHist) - 1:
-                    crossSpeed =  str(
-                           np.abs(
-                               round(
-                           (jointColvar[i+1, 1] - jointColvar[i, 1]) / (jointColvar[i+1, 0] - jointColvar[i, 0]),3)))
-
+                    crossSpeed = str(
+                        np.abs(
+                            round(
+                                (jointColvar[i + 1, 1] - jointColvar[i, 1]) / (jointColvar[i + 1, 0] - jointColvar[i, 0]), 3)))
 
             tpsInfo += '{:10.3f} {:8d} {:10.3f} {:8d} {:>8s} {:>8s}\n'.format(jointColvar[i, 0],
-                                                                       jointColvar[i,
-                                                                                   0] >= 0,
-                                                                       jointColvar[i, 1],
-                                                                       jointSide[i],
-                                                                       cross,
-                                                                       crossSpeed)
+                                                                              jointColvar[i,
+                                                                                          0] >= 0,
+                                                                              jointColvar[i, 1],
+                                                                              jointSide[i],
+                                                                              cross,
+                                                                              crossSpeed)
         tpsInfo += '''
 # Timestamp:\t\t%s
 # Run number:\t\t%d
@@ -570,21 +578,21 @@ class tsSetup:
         if accepted:
             # move traj
             shutil.move(pathTree['run'] + 'fulltraj.xtc',
-                    pathTree['data'] + '%05d.xtc' % runNumber)
+                        pathTree['data'] + '%05d.xtc' % runNumber)
 
             # write trajectory info file
             with open(pathTree['data'] + '%05d.info' % runNumber, 'w') as handle:
                 handle.write(tpsInfo)
 
             # write .cv file:
-            with open(pathTree['data'] + '%05d.cv' % runNumber, 'w') as handle:
-                for line in jointColvar:
-                    handle.write(
-                            ' '.join(
-                                ['{:8.3f}'.format(field) for field in line]) + '\n')
+            #with open(pathTree['data'] + '%05d.cv' % runNumber, 'w') as handle:
+            #    for line in jointColvar:
+            #        handle.write(
+            #            ' '.join(
+            #                ['{:8.3f}'.format(field) for field in line]) + '\n')
 
             # Add tps_acc entry
-            tpsAccEntry(path+'tps_acc.log',runNumber,
+            tpsAccEntry(path + 'tps_acc.log', runNumber,
                         len(jointColvar),
                         jointColvar[startFrame][1],
                         jointSide[startFrame],
@@ -594,7 +602,7 @@ class tsSetup:
         else:
 
             # Add tps_rej entry
-            tpsAccEntry(path+'tps_rej.log',runNumber,
+            tpsAccEntry(path + 'tps_rej.log', runNumber,
                         len(jointColvar),
                         jointColvar[startFrame][1],
                         jointSide[startFrame],
@@ -606,7 +614,6 @@ class tsSetup:
             # mutiple rejected trajectories are appended to the same file
             with open(pathTree['data'] + 'rej_%05d.info' % runNumber, 'a') as handle:
                 handle.write(tpsInfo)
-
 
 
 class tsAnalysis:
@@ -627,19 +634,18 @@ class tsAnalysis:
 
         """
 
-        #TODO: add some output text to keep the user informed...
+        # TODO: add some output text to keep the user informed...
 
         if units not in ['kJ/mol', 'kcal/mol', 'kT']:
             print('Warning:  unrecognised energy units, assuming kJ/mol')
 
         self.beta = 1 / 2.479
-        self.crossInfo=[]
-        self.probInfo=[]
+        self.crossInfo = []
+        self.probInfo = []
 
-        self.velEnsemble=[]
+        self.velEnsemble = []
 
-        self.pathToFiles=folderName
-
+        self.pathToFiles = folderName
 
     def getProbabilities(self, folderName=''):
         """Reads par files produced by ts-pptis and extracts information on crossing 
@@ -649,88 +655,85 @@ class tsAnalysis:
 
             folderName (string, optional): path to the directory containing the pptis 
                 windows subdirectories
-        
+
         """
 
-        if folderName=='': folderName=self.pathToFiles
+        if folderName == '':
+            folderName = self.pathToFiles
 
-        output=open('probabilities.dat', 'w')
+        output = open('probabilities.dat', 'w')
         output.write('#Name\tLambda\tpmm\tppm\tpmp\tppp\n')
 
-        listFold=[]
+        listFold = []
         for fold in folderName:
-            if os.path.isfile(fold+'/window.cfg'):
-                    listFold.append(fold)
+            if os.path.isfile(fold + '/window.cfg'):
+                listFold.append(fold)
 
         listFold = sorted(listFold, key=natural_keys)
 
         for window in listFold:
-            target=getLambda(window)
+            target = getLambda(window)
            # nAcc=getNumRows(folderName+window+'/tps_acc.log')
            # nRej=getNumRows(folderName+window+'/tps_rej.log')
 
-            tAcc,tRej,iState,fState=[],[],[],[]
-            dRej,dState={},{}
+            tAcc, tRej, iState, fState = [], [], [], []
+            dRej, dState = {}, {}
 
-            dataAcc=open(window+'/tps_acc.log','r')
+            dataAcc = open(window + '/tps_acc.log', 'r')
             for line in dataAcc:
-                if line[0]!='#':
-                    line=line.split()
-                    #not really needed, I'm going to leave them for now
+                if line[0] != '#':
+                    line = line.split()
+                    # not really needed, I'm going to leave them for now
                     tAcc.append(np.int(line[0]))
                     iState.append(line[4])
                     fState.append(line[5])
-           
-                    #not sure about this dictionary
-                    if line[4]+line[5] not in dState:
-                        dState[line[4]+line[5]]=0
-                    dState[line[4]+line[5]]+=1
-                #there's a statement in Giorgio's scripts about weights 
-                #on these variables, but it seems to be avoided through
-                #a "next" in the loop... check it out!
+
+                    # not sure about this dictionary
+                    if line[4] + line[5] not in dState:
+                        dState[line[4] + line[5]] = 0
+                    dState[line[4] + line[5]] += 1
+                # there's a statement in Giorgio's scripts about weights
+                # on these variables, but it seems to be avoided through
+                # a "next" in the loop... check it out!
             dataAcc.close()
 
-            dataRej=open(window+'/tps_rej.log','r')
+            dataRej = open(window + '/tps_rej.log', 'r')
             for line in dataRej:
-                if line[0]!='#':
-                    line=line.split()
-                    #not really needed, I'm going to leave it for now
+                if line[0] != '#':
+                    line = line.split()
+                    # not really needed, I'm going to leave it for now
                     tRej.append(np.int(line[0]))
 
-                    #not sure about this dictionary
+                    # not sure about this dictionary
                     if np.int(line[0]) not in dRej:
-                        dRej[np.int(line[0])]=0
-                    dRej[np.int(line[0])]+=1
+                        dRej[np.int(line[0])] = 0
+                    dRej[np.int(line[0])] += 1
 
             dataRej.close()
-            
 
-            #check ppm pmm pmp ppp order as it may be wrong!
+            # check ppm pmm pmp ppp order as it may be wrong!
 
             if 'AB' not in dState or 'AA' not in dState:
-                #not sure why the second condition is necessary...
-                ppm=float('inf')
-                pmm=float('inf')
+                # not sure why the second condition is necessary...
+                ppm = float('inf')
+                pmm = float('inf')
             else:
-                ppm=dState['AB']*1.0/(dState['AB']+dState['AA'])
-                pmm=1-ppm
-
+                ppm = dState['AB'] * 1.0 / (dState['AB'] + dState['AA'])
+                pmm = 1 - ppm
 
             if 'BA' not in dState or 'BB' not in dState:
-                #not sure why the second condition is necessary...
-                pmp=float('inf')
-                ppp=float('inf')
+                # not sure why the second condition is necessary...
+                pmp = float('inf')
+                ppp = float('inf')
             else:
-                pmp=dState['BA']*1.0/(dState['BA']+dState['BB'])
-                ppp=1-pmp
+                pmp = dState['BA'] * 1.0 / (dState['BA'] + dState['BB'])
+                ppp = 1 - pmp
 
-            output.write('{:s}'.format(window[window.rfind('/')+1:])+'\t'+'{:.2f}'.format(target)+'\t'+\
-               '{:.2f}'.format(pmm)+'\t'+'{:.2f}'.format(ppm)+'\t'+'{:.2f}'.format(pmp)+'\t'+'{:.2f}'.format(ppp)+'\n')
-            self.probInfo.append([target,pmm,ppm,pmp,ppp]) 
+            output.write('{:s}'.format(window[window.rfind('/') + 1:]) + '\t' + '{:.2f}'.format(target) + '\t' +
+                         '{:.2f}'.format(pmm) + '\t' + '{:.2f}'.format(ppm) + '\t' + '{:.2f}'.format(pmp) + '\t' + '{:.2f}'.format(ppp) + '\n')
+            self.probInfo.append([target, pmm, ppm, pmp, ppp])
 
         output.close()
-
-
 
     def getCrossings(self, tsLambda, folderName=''):
         """Reads par files produced by ts-pptis and extracts information on crossing eventsi
@@ -741,60 +744,65 @@ class tsAnalysis:
             tsLambda (float): value of the window at the TS
             folderName (string, optional): path to the directory containing the pptis 
                 windows subdirectories
-        
+
         """
 
-        if folderName=='': folderName=self.pathToFiles
-        
-        output=open('crossings.dat', 'w')                
-        output.write('#Shot\tMeanVelocity\t+Cross\t-Cross\tWeight\tEndingSide\n')
-       
-        listFold=[]
+        if folderName == '':
+            folderName = self.pathToFiles
+
+        output = open('crossings.dat', 'w')
+        output.write(
+            '#Shot\tMeanVelocity\t+Cross\t-Cross\tWeight\tEndingSide\n')
+
+        listFold = []
         for fold in folderName:
-            if os.path.isfile(fold+'/window.cfg'):
-                    listFold.append(fold)
+            if os.path.isfile(fold + '/window.cfg'):
+                listFold.append(fold)
 
-        lambdas=[]
-        for window in listFold:   #redundant loop, find a better way
+        lambdas = []
+        for window in listFold:  # redundant loop, find a better way
             lambdas.append(getLambda(window))
-        lamIdx=getClosestLambda(tsLambda,lambdas)
+        lamIdx = getClosestLambda(tsLambda, lambdas)
 
-            
         for window in listFold:
-            target=getLambda(window)
+            target = getLambda(window)
 
-            #keep going only if lambda is at the TS (or close to it)
-            if target!=lambdas[lamIdx]: continue
+            # keep going only if lambda is at the TS (or close to it)
+            if target != lambdas[lamIdx]:
+                continue
 
-            pp,pm = 0,0
-            velSum, weightsSum = 0,0 #needed only for logging if we decide to keep it
+            pp, pm = 0, 0
+            velSum, weightsSum = 0, 0  # needed only for logging if we decide to keep it
 
-            #load the par files, to be adapted 
-            listPar=[]
-            for fi in os.listdir(window+'/data/'):
+            # load the par files, to be adapted
+            listPar = []
+            for fi in os.listdir(window + '/data/'):
                 if fi.endswith(".info") and not fi.startswith("rej_"):
                     listPar.append(fi)
-            listSorted=sorted(listPar, key=natural_keys)
+            listSorted = sorted(listPar, key=natural_keys)
 
             for fi in listSorted:
-                crossData = analyzeCross(window+'/data/'+fi, target) #see tools
-                pp += crossData['p0p']  #not needed?
-                pm += crossData['p0m']  #not needed?
-                weight = getWeightTraj(window+'/tps_rej.log', fi[:4]) #see tools
-                velSum += crossData['vel']*weight #not needed?
-                weightsSum += weight #not needed?
-        
-            #LOGGING and OUTPUTTING... to be fixed               
-                if crossData['vel'] > 0:    #but why only positive vel? 
-                    output.write('{:s}'.format(fi[:4]) +'\t'+ '{:.4f}'.format(crossData['vel'])+'\t' + '{:d}'.format(crossData['nrPos']) + '\t' +\
-                    '{:d}'.format(crossData['nrNeg']) + '\t' +'{:d}'.format(weight)+ '\t' +crossData['end'] +'\n')  
-                    self.crossInfo.append([fi[:4],crossData['vel'],crossData['nrPos'],crossData['nrNeg'],weight,crossData['end']]) #a bit redundant at the moment
+                crossData = analyzeCross(
+                    window + '/data/' + fi, target)  # see tools
+                pp += crossData['p0p']  # not needed?
+                pm += crossData['p0m']  # not needed?
+                weight = getWeightTraj(
+                    window + '/tps_rej.log', fi[:4])  # see tools
+                velSum += crossData['vel'] * weight  # not needed?
+                weightsSum += weight  # not needed?
+
+            # LOGGING and OUTPUTTING... to be fixed
+                if crossData['vel'] > 0:  # but why only positive vel?
+                    output.write('{:s}'.format(fi[:4]) + '\t' + '{:.4f}'.format(crossData['vel']) + '\t' + '{:d}'.format(crossData['nrPos']) + '\t' +
+                                 '{:d}'.format(crossData['nrNeg']) + '\t' + '{:d}'.format(weight) + '\t' + crossData['end'] + '\n')
+                    # a bit redundant at the moment
+                    self.crossInfo.append(
+                        [fi[:4], crossData['vel'], crossData['nrPos'], crossData['nrNeg'], weight, crossData['end']])
             output.close()
 
-            #no need to check the other folders if we got to this point  
+            # no need to check the other folders if we got to this point
             break
 
-    
     def getRates(self, fes, Astate=-1, Bstate=-1, Acorr=0, Bcorr=0, valTS=None, error=None, printFile=False):
         """Reads the free energy surface FES, TS-PPTIS crossing probabilities
         and ouputs, calculate the rate constants and print(them to screen and/or to file.
@@ -825,15 +833,15 @@ class tsAnalysis:
             As = Astate
 
         if Bstate == -1:
-            Bs = len(fes[1])-1
+            Bs = len(fes[1]) - 1
         else:
             Bs = Bstate
 
         if valTS == None or valTS > np.max(fes[0]) or valTS < np.min(fes[0]):
             iTS = np.argmax(fes[1])
         else:
-            iTS = min(range(len(fes[0])), key=lambda i: abs(fes[0][i]-valTS))
-     
+            iTS = min(range(len(fes[0])), key=lambda i: abs(fes[0][i] - valTS))
+
         if error == None:
             error = 1 / self.beta
 
@@ -841,8 +849,8 @@ class tsAnalysis:
 
         norm = 0
         for i in range(As, iTS):
-            norm += 0.5 * (np.exp(-self.beta * offFES[i + 1]) + np.exp(-self.beta * \
-                offFES[i])) * (fes[0][i + 1] - fes[0][i])
+            norm += 0.5 * (np.exp(-self.beta * offFES[i + 1]) + np.exp(-self.beta *
+                                                                       offFES[i])) * (fes[0][i + 1] - fes[0][i])
         PA = np.exp(-self.beta * (offFES[iTS] + Acorr)) / norm
 
         PAlow = np.exp(-self.beta * (offFES[iTS] + Acorr - error)) / norm
@@ -850,14 +858,15 @@ class tsAnalysis:
 
         norm = 0
         for i in range(iTS, Bs - 1):
-            norm += 0.5 * (np.exp(-self.beta * offFES[i + 1]) + np.exp(-self.beta * \
-                 offFES[i])) * (fes[0][i + 1] - fes[0][i])
+            norm += 0.5 * (np.exp(-self.beta * offFES[i + 1]) + np.exp(-self.beta *
+                                                                       offFES[i])) * (fes[0][i + 1] - fes[0][i])
         PB = np.exp(-self.beta * (offFES[iTS] + Bcorr)) / norm
 
         PBlow = np.exp(-self.beta * (offFES[iTS] + Bcorr - error)) / norm
         PBupp = np.exp(-self.beta * (offFES[iTS] + Bcorr + error)) / norm
 
-        R = calcR(fes[0][iTS], probInfo=self.probInfo, crossInfo=self.crossInfo)
+        R = calcR(fes[0][iTS], probInfo=self.probInfo,
+                  crossInfo=self.crossInfo)
 
         kAB = PA * R * 1e12
         kABlow = PAlow * R * 1e12
@@ -867,27 +876,26 @@ class tsAnalysis:
         kBAlow = PBlow * R * 1e12
         kBAupp = PBupp * R * 1e12
 
-
-        msg = '{:>20} | {:>12} | {:>12} | {:>12}\n'.format('','Rate','Lower Bound','Upper Bound') + \
-            '_'*65 + '\n' + \
-            '{:<20} | {:>12} | {:>12} | {:>12}\n'.format('','','','') + \
-            '{:<20} | {:>12.3e} | {:>12.3e} | {:>12.3e}\n'.format('kOn  [M^-1 s^-1]',kBA,kBAlow,kBAupp) + \
-            '{:<20} | {:>12} | {:>12} | {:>12}\n'.format('','','','') + \
-            '{:<20} | {:>12.3e} | {:>12.3e} | {:>12.3e}\n'.format('kOff [s^-1]',kAB,kABlow,kABupp)
+        msg = '{:>20} | {:>12} | {:>12} | {:>12}\n'.format('', 'Rate', 'Lower Bound', 'Upper Bound') + \
+            '_' * 65 + '\n' + \
+            '{:<20} | {:>12} | {:>12} | {:>12}\n'.format('', '', '', '') + \
+            '{:<20} | {:>12.3e} | {:>12.3e} | {:>12.3e}\n'.format('kOn  [M^-1 s^-1]', kBA, kBAlow, kBAupp) + \
+            '{:<20} | {:>12} | {:>12} | {:>12}\n'.format('', '', '', '') + \
+            '{:<20} | {:>12.3e} | {:>12.3e} | {:>12.3e}\n'.format(
+                'kOff [s^-1]', kAB, kABlow, kABupp)
 
         print(msg)
         # Add also the times tau...
         if printFile == True:
-            f = open(self.pathToFiles+'RatesOutput.dat', 'w')
+            f = open(self.pathToFiles + 'RatesOutput.dat', 'w')
             f.write(msg)
             f.close()
-
 
     def endPointVel(self, folderName=''):
         """ Calculates the --/+- and -+/+- end point velocity distribution for each window.
             Can be used to check for the vality of the memory loss assumption. 
             The data is then stored in self.velEnsembl in the following format.
-                
+
                 eelEnsemble (nested list): Nx2 list with the following axes:
                                                     0: window
                                                     1: *-/*+ end point velocity
@@ -898,63 +906,62 @@ class tsAnalysis:
         """
 
         # List windows' folders
-        if folderName=='': folderName=self.pathToFiles
-        listFold=[]
+        if folderName == '':
+            folderName = self.pathToFiles
+        listFold = []
         for fold in folderName:
-            if os.path.isfile(fold+'/window.cfg'):
-                    listFold.append(fold)
+            if os.path.isfile(fold + '/window.cfg'):
+                listFold.append(fold)
         listFold = sorted(listFold, key=natural_keys)
-
 
         globVelEnsemble = []
         for window in listFold:
             # for each folder list info files
-            listPar=[]
-            for fi in os.listdir(window+'/data/'):
+            listPar = []
+            for fi in os.listdir(window + '/data/'):
                 if fi.endswith(".info") and not fi.startswith("rej_"):
-                    listPar.append(window+'/data/'+fi)
+                    listPar.append(window + '/data/' + fi)
             listPar = sorted(listPar, key=natural_keys)
 
             # load tps_acc.log
-            with open(window+'/tps_acc.log') as handle:
+            with open(window + '/tps_acc.log') as handle:
                 tpsAcc = [filter(None,
-                                   line.strip().split(' '))
-                            for line in handle.readlines() if line[0] != '#']
+                                 line.strip().split(' '))
+                          for line in handle.readlines() if line[0] != '#']
 
             endPointVel = []
 
             for i in range(len(listPar)):
                 # For each info file get end-point velocity
-		with open(listPar[i]) as handle:
-			par = [map(float,
-                                    filter(None,
-                                           line.strip().split(' ')))
-				for line in handle.readlines() if line[0] != '#']
+                with open(listPar[i]) as handle:
+                    par = [map(float,
+                               filter(None,
+                                      line.strip().split(' ')))
+                           for line in handle.readlines() if line[0] != '#']
 
-		velocity = [line[5] for line in par if len(line) >= 6]
-		velocity = velocity[-1]
+                velocity = [line[5] for line in par if len(line) >= 6]
+                velocity = velocity[-1]
 
                 # Record end point interface
-                endPoint = int(tpsAcc[i+1][5] == 'B')
+                endPoint = int(tpsAcc[i + 1][5] == 'B')
 
                 # Combine interface and velocity in list
-                endPointVel.append([endPoint,velocity])
+                endPointVel.append([endPoint, velocity])
 
             endPointVel = np.array(endPointVel)
 
             if len(endPointVel) > 0:
-                # *- and *+ end point velocities 
-                velEnsemble = (endPointVel[endPointVel[:,0] == 0,1],\
-                               endPointVel[endPointVel[:,0] == 1,1])
+                # *- and *+ end point velocities
+                velEnsemble = (endPointVel[endPointVel[:, 0] == 0, 1],
+                               endPointVel[endPointVel[:, 0] == 1, 1])
 
                 #*****TESTING*******
                 #velEnsemble = np.random.random(size=1000).reshape([2,500])
                 #******i************
             else:
-                velEnsemble=[]
+                velEnsemble = []
 
             self.velEnsemble.append(velEnsemble)
-
 
     def checkMLA(self, bins=10, plot=False):
         """ Tests the memory loss assumption against the data.
@@ -973,92 +980,93 @@ class tsAnalysis:
                                                        histogram bins and counts
         """
 
-        globHist=[]
+        globHist = []
         # For each ensemble calculate the histogram
         for ens in self.velEnsemble:
-            if ens!=[]:
-                #check this normalization...
-                hist=[np.histogram(x,bins=bins,normed=True) if len(x)>0 else ([],[])\
-                                  for x in ens]
+            if ens != []:
+                # check this normalization...
+                hist = [np.histogram(x, bins=bins, normed=True) if len(x) > 0 else ([], [])
+                        for x in ens]
                 # Get bins midpoints, not needed
-                midBins=[[(h[1][x+1] + h[1][x])/2 for x in range(len(h[1])-1)]\
-                            if len(h[0])>0 else [] for h in hist]
+                midBins = [[(h[1][x + 1] + h[1][x]) / 2 for x in range(len(h[1]) - 1)]
+                           if len(h[0]) > 0 else [] for h in hist]
             else:
-               hist,midBins = np.array([]), np.array([])
+                hist, midBins = np.array([]), np.array([])
 
-            globHist.append(zip(midBins,[h[0] for h in hist]))
-        
-        if plot==True:
+            globHist.append(zip(midBins, [h[0] for h in hist]))
+
+        if plot == True:
 
             import matplotlib.pyplot as plt
-            #add matplotlib to the requirements
-            fig, ax = plt.subplots(len(globHist), 1, sharex=True, figsize=(5,2.5*len(globHist)))
+            # add matplotlib to the requirements
+            fig, ax = plt.subplots(
+                len(globHist), 1, sharex=True, figsize=(5, 2.5 * len(globHist)))
 
-            for i in range(len(globHist)): 
-                if globHist[i]!=[]:
-                    ax[i].bar(globHist[i][0][0],globHist[i][0][1],alpha=0.4,color='#7daed8')
-                    ax[i].bar(globHist[i][1][0],globHist[i][1][1],alpha=0.4,color='#d87d7d')
+            for i in range(len(globHist)):
+                if globHist[i] != []:
+                    ax[i].bar(globHist[i][0][0], globHist[i][0]
+                              [1], alpha=0.4, color='#7daed8')
+                    ax[i].bar(globHist[i][1][0], globHist[i][1]
+                              [1], alpha=0.4, color='#d87d7d')
 
-            plt.xlabel(r'Velocity (nm/s)', labelpad=8, fontsize=20) #check units
-            #add ticks size etc...
+            plt.xlabel(r'Velocity (nm/s)', labelpad=8,
+                       fontsize=20)  # check units
+            # add ticks size etc...
             plt.tight_layout()
-            #plt.show()
-            plt.savefig(self.pathToFiles+'/MLA.png', dpi=300)
+            # plt.show()
+            plt.savefig(self.pathToFiles + '/MLA.png', dpi=300)
 
-
-        #Here I'm making up a way to automatically check MLA, we should talk about this
+        # Here I'm making up a way to automatically check MLA, we should talk about this
 
         """ Chi-squared """
-        chiSq=[]
+        chiSq = []
         for window in globHist:
-            if window!=[]:
-                sigma=0
-                for  i in range(len(window[0][0])):
-                    if window[1][1][i]+window[0][1][i]==0:
-                       continue
+            if window != []:
+                sigma = 0
+                for i in range(len(window[0][0])):
+                    if window[1][1][i] + window[0][1][i] == 0:
+                        continue
                     else:
-                        sigma=sigma+(window[1][1][i]-window[0][1][i])\
-                                   *(window[1][1][i]-window[0][1][i])\
-                                   /(window[1][1][i]+window[0][1][i])
-                chiSq.append(sigma/2)
+                        sigma = sigma + (window[1][1][i] - window[0][1][i])\
+                            * (window[1][1][i] - window[0][1][i])\
+                            / (window[1][1][i] + window[0][1][i])
+                chiSq.append(sigma / 2)
 
-       
-        chiSq=[sigmoid(cs,ref=0.5,beta=10) for cs in chiSq] #Arbitrary!
-
+        chiSq = [sigmoid(cs, ref=0.5, beta=10) for cs in chiSq]  # Arbitrary!
 
         print(chiSq)
-        print('MLA Test: Velocities Distribution Similarity\n'+\
-              '--------------------------------------------\n'+\
+        print('MLA Test: Velocities Distribution Similarity\n' +
+              '--------------------------------------------\n' +
               '\nOverlap per window')
         for cs in chiSq:
-            print('{:.2f}'.format((1.0-cs)*100.0)+'%')
-        print('\nAverage Overlap\n'+\
-            '{:.2f}'.format((1.0-np.mean(chiSq))*100.0)+'%\n')
+            print('{:.2f}'.format((1.0 - cs) * 100.0) + '%')
+        print('\nAverage Overlap\n' +
+              '{:.2f}'.format((1.0 - np.mean(chiSq)) * 100.0) + '%\n')
 
-        mla=False
-        if (np.mean(chiSq))<0.05: mla=True    #Arbitrary!
-        
+        mla = False
+        if (np.mean(chiSq)) < 0.05:
+            mla = True  # Arbitrary!
 
-        print('---------\nMLA: '+str(mla)+'\n---------')
-              	  
+        print('---------\nMLA: ' + str(mla) + '\n---------')
 
         return globHist
+
 
 def testAll():
     """ Runs a standard set of commands to test the correct functioning of TS-PPTIS. """
 
-    # Test initialisation
+    #  Test initialisation
     #ts = tsSetup('../testfiles/topol.top',
-    #             '../testfiles/system.gro'
-    #             '../testfiles/md.mdp',
-    #              gmx='/usr/bin/gmx')
-    #ts.initWindow('../testfiles/pptis20',
-    #              [1.5,1.7,1.9],
-    #              '../testfiles/traj_fixed.xtc',
-    #              '../testfiles/COLVAR',
-    #              overwrite=True)
-    #ts.setUpTPS('../testfiles/pptis10')
-    #ts.finalizeTPS('../testfiles/pptis10')
+    #            '../testfiles/system.gro',
+    #            '../testfiles/md.mdp',
+    #            gmx='/usr/bin/gmx')
+    #ts.initWindow('../testfiles/pptis01',
+    #             [1.5, 1.7, 1.9],
+    #             '../testfiles/traj_fixed.xtc',
+    #             '../testfiles/COLVAR',
+    #             overwrite=True)
+    #ts.setUpRun('../testfiles/pptis01')
+    #ts.finalizeRun('../testfiles/pptis01')
 
     #tsa = tsAnalysis('../testfiles')
     #import matplotlib.pyplot as plt
@@ -1069,21 +1077,20 @@ def testAll():
     #        plt.bar(ensemble[0],ensemble[1],width=0.05,alpha=0.5)
     #plt.show()
 
-
-    tsa = tsAnalysis('/home/federico/Giulio/pptis_test2')     
+    #tsa = tsAnalysis('/home/federico/Giulio/pptis_test2')
 
     #tsa.getProbabilities()
 
     #fesList=plumed2List('/home/federico/Giulio/pptis_test/fesfake.dat')
-    #iTS = np.argmax(fesList[1][:int(len(fesList[1])/2)])
+    #TS = np.argmax(fesList[1][:int(len(fesList[1])/2)])
     #trans=fesList[0][iTS]
     #print(trans)
-    #tsa.getCrossings(trans) 
+    #tsa.getCrossings(trans)
 
-    #tsa.getRates(fesList,valTS=trans) 
+    #tsa.getRates(fesList,valTS=trans)
 
-    tsa.endPointVel()
-    hist=tsa.checkMLA(plot=True)
+    #tsa.endPointVel()
+    #hist = tsa.checkMLA(plot=True)
 
 
 if __name__ == "__main__":
