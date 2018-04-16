@@ -26,23 +26,24 @@ if __name__ == "__main__":
     parser.add_argument("-trans",type=float,help="position of the Transition State in the CV space", default=None)
     parser.add_argument("-fes",type=str,help="free energy profile file (Plumed 2 format)" , default="./fes.dat")
     parser.add_argument("-error",type=float,help="error on the free energy. Default is kbT" , default=None)
+    parser.add_argument("-noh",help="just print the numbers on a single line" , action='store_true')
     args = parser.parse_args()
 
     """Initialize tsAnalysis."""
 
-    print('\n- Initalising...')
+    if not args.noh: print('\n- Initalising...')
 
     tsa = tsp.tsAnalysis(args.folders)
 
     """Extract Probabilities."""
 
-    print('- Calculating window probabilities...')
+    if not args.noh: print('- Calculating window probabilities...')
 
     tsa.getProbabilities()
 
     """Change Fes Format."""
 
-    print('- Converting FES...')
+    if not args.noh: print('- Converting FES...')
 
     fesList=tsp.plumed2List(args.fes)
 
@@ -51,19 +52,19 @@ if __name__ == "__main__":
     if args.trans==None:
         iTS = np.argmax(fesList[1])
         args.trans=fesList[0][iTS]
-        print('- Finding Transition State...',args.trans)
+        if not args.noh: print('- Finding Transition State...',args.trans)
 
     """Extract Crossings."""
 
-    print('- Extracting crossings...')
+    if not args.noh: print('- Extracting crossings...')
 
     tsa.getCrossings(args.trans)
 
     """Extract Rates."""
 
-    print('- Calculating rates...\n')
+    if not args.noh: print('- Calculating rates...\n')
 
-    tsa.getRates(fesList, valTS=args.trans, error=args.error)
+    tsa.getRates(fesList, valTS=args.trans, error=args.error, human=not args.noh)
 
     """Check Memory Loss Assumption."""
 

@@ -803,7 +803,7 @@ class tsAnalysis:
             # no need to check the other folders if we got to this point
             break
 
-    def getRates(self, fes, Astate=-1, Bstate=-1, Acorr=0, Bcorr=0, valTS=None, error=None, printFile=False):
+    def getRates(self, fes, Astate=-1, Bstate=-1, Acorr=0, Bcorr=0, valTS=None, error=None, printFile=False, human=True):
         """Reads the free energy surface FES, TS-PPTIS crossing probabilities
         and ouputs, calculate the rate constants and print(them to screen and/or to file.
 
@@ -824,6 +824,7 @@ class tsAnalysis:
             error (float, optional): free energy error to calculate the rates range,
                 if none provided automatically assume 1 kT
             printFile (bool, optional): activate/deactivate printing to file
+            human (bool, optional): formatted printing or just the raw numbers (flattened)
 
         """
 
@@ -876,13 +877,18 @@ class tsAnalysis:
         kBAlow = PBlow * R * 1e12
         kBAupp = PBupp * R * 1e12
 
-        msg = '{:>20} | {:>12} | {:>12} | {:>12}\n'.format('', 'Rate', 'Lower Bound', 'Upper Bound') + \
-            '_' * 65 + '\n' + \
-            '{:<20} | {:>12} | {:>12} | {:>12}\n'.format('', '', '', '') + \
-            '{:<20} | {:>12.3e} | {:>12.3e} | {:>12.3e}\n'.format('kOn  [M^-1 s^-1]', kBA, kBAlow, kBAupp) + \
-            '{:<20} | {:>12} | {:>12} | {:>12}\n'.format('', '', '', '') + \
-            '{:<20} | {:>12.3e} | {:>12.3e} | {:>12.3e}\n'.format(
-                'kOff [s^-1]', kAB, kABlow, kABupp)
+        if human:
+            msg = '{:>20} | {:>12} | {:>12} | {:>12}\n'.format('', 'Rate', 'Lower Bound', 'Upper Bound') + \
+                '_' * 65 + '\n' + \
+                '{:<20} | {:>12} | {:>12} | {:>12}\n'.format('', '', '', '') + \
+                '{:<20} | {:>12.3e} | {:>12.3e} | {:>12.3e}\n'.format('kOn  [M^-1 s^-1]', kBA, kBAlow, kBAupp) + \
+                '{:<20} | {:>12} | {:>12} | {:>12}\n'.format('', '', '', '') + \
+                '{:<20} | {:>12.3e} | {:>12.3e} | {:>12.3e}\n'.format(
+                    'kOff [s^-1]', kAB, kABlow, kABupp)
+        else:
+            # Same order as with human = True, but flattened
+            msg = '{:>12.3e} {:>12.3e} {:>12.3e} '.format(kBA, kBAlow, kBAupp) + \
+                  '{:>12.3e} {:>12.3e} {:>12.3e}'.format(kAB, kABlow, kABupp)
 
         print(msg)
         # Add also the times tau...
@@ -893,7 +899,7 @@ class tsAnalysis:
 
     def endPointVel(self, folderName=''):
         """ Calculates the --/+- and -+/+- end point velocity distribution for each window.
-            Can be used to check for the vality of the memory loss assumption. 
+            Can be used to check for the vality of the memory loss assumption.
             The data is then stored in self.velEnsembl in the following format.
 
                 eelEnsemble (nested list): Nx2 list with the following axes:
