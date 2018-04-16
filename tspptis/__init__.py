@@ -469,10 +469,10 @@ class tsSetup:
         if len(bwTraj) == 0 or len(fwTraj) == 0:
             throwError('Length of one of trajectories is 0')
 
+        # Fix time for backward trajectory
+        bwTraj.time = bwTraj.time[::-1] - len(bwTraj) + 1
         replTraj = [bwTraj[:0:-1], fwTraj]
 
-        del(bwTraj)
-        del(fwTraj)
 
         endPoint = []
         jointColvar = []
@@ -499,6 +499,9 @@ class tsSetup:
         replTraj.save(pathTree['run'] + 'fulltraj.xtc')
 
         pathLength = len(replTraj)
+
+        # Delete trajs, just to free up some space
+        del(bwTraj, fwTraj, replTraj)
 
         # Join COLVARs
         jointColvar = np.concatenate([jointColvar[0], jointColvar[1]])
