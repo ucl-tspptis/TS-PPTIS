@@ -109,17 +109,17 @@ def parseWindows(nameFile):
     return outList
 
 
-def parseTxt(colvar):
-    """Parse COLVAR files
+def parseTxt(info):
+    """Parse info files
 
     Args:
-        colvar (string): COLVAR file
+        info (string): info file
 
     Returns:
 
-        outList (numpy array, float): list with time and colvar values
+        outList (numpy array, float): list with time and info values
     """
-    with open(colvar) as handle:
+    with open(info) as handle:
 	raw = [map(float,line.strip().split())
 		for line in handle.readlines() if line[0] != '#' and line != '\n']
 
@@ -249,6 +249,11 @@ def extractFrame(cvValue, trajFile, topFile, colvarFile, outFile='out.pdb', traj
         traj = trajFile
 
     colvar = parseTxt(colvarFile)
+    # Column 1 if .cv file, 2 if .info 
+    if colvarFile.endswith('.cv'):
+        column = 1
+    else:
+        column = 2
 
     # Subsample trajectory or COLVAR depending on who has highest stride
     # in order to have (almost) equal number of frames and colvar lines
@@ -266,12 +271,12 @@ def extractFrame(cvValue, trajFile, topFile, colvarFile, outFile='out.pdb', traj
 
     # IF cvValue is a float look for the value, else for the inclusive range
     if type(cvValue) == float:
-        framesCV = findNearest(colvar[:, 1], cvValue)
-        frames = np.where(colvar[:, 1] == framesCV)[0]
+        framesCV = findNearest(colvar[:, column], cvValue)
+        frames = np.where(colvar[:, column] == framesCV)[0]
     else:
         cvEntries = np.where(np.logical_and(
-            (colvar[:, 1] >= cvValue[0]), (colvar[:, 1] <= cvValue[1])))[0]
-        framesCV = colvar[cvEntries, 1]
+            (colvar[:, column] >= cvValue[0]), (colvar[:, column] <= cvValue[1])))[0]
+        framesCV = colvar[cvEntries, column]
         frames = cvEntries
 
     # Handle case where multiple frames are selected
@@ -302,13 +307,20 @@ def shootingPoint(colvarFile, interfaces):
 
     # Read colvar file
     colvar = parseTxt(colvarFile)
+
+    # Column 1 if .cv file, 2 if .info 
+    if colvarFile.endswith('.cv'):
+        column = 1
+    else:
+        column = 2
+
     # Define shooting point CV value
     point = np.random.uniform(interfaces[0], interfaces[1])
     # Find closest frame
-    frame = np.where(colvar[:, 1] == findNearest(colvar[:, 1], point))[0][0]
+    frame = np.where(colvar[:, column] == findNearest(colvar[:, column], point))[0][0]
 
     # return frame number, CV value, lpf
-    return frame, round(colvar[frame, 1], 3), int(colvar[frame,0] >= 0)
+    return frame, round(colvar[frame, column], 3), int(colvar[frame,0] >= 0)
 
 
 def sectionDelimiter(title, size=80, char='_'):

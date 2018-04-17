@@ -339,6 +339,7 @@ class tsSetup:
                                     trajStride=config[prevTrajExt[1:] + '_stride'],
                                     colvarStride=config['colvar_stride'])
 
+
         printLine('Shooting point', '%.2f -> %.2f' %
                   (point[1], actual_point[1]))
         printLine('Shooting frame', '%d -> %d' % (point[0], actual_point[0]))
