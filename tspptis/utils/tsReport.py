@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
 
 
-    header = '{:15s} {:20s} {:>7s} {:>7s} {:>7s} {:>7s} {:>7s} {:>7s} {:>7s} {:>15s}{:>15s}'.format('WINDOW','LAMBDA','TOT','ACC','REJ','AA','AB','BA','BB','ACC_LEN [ns]','REJ_LEN [ns]')
+    header = '{:15s} {:20s} {:>6s} {:>6s} {:>6s} {:>6s} {:>6s} {:>6s} {:>6s} {:>10s}{:>10s}'.format('WINDOW','LAMBDA','TOT','ACC','REJ','AA','AB','BA','BB','ACC_LEN','REJ_LEN')
     print header
     print '_'*len(header) + '\n'
 
@@ -68,7 +68,7 @@ if __name__ == "__main__":
             )
         name = filter(None, folder.split('/'))[-1]
 
-        print '{:15s} {:20s} {:7d} {:7d} {:7d} {:7d} {:7d} {:7d} {:7d} {:15.3f}{:15.3f}'.format(
+        print '{:15s} {:20s} {:6d} {:6d} {:6d} {:6d} {:6d} {:6d} {:6d} {:10.3f}{:10.3f}'.format(
                     name,
                     window,
                     acc+rej,
@@ -82,7 +82,7 @@ if __name__ == "__main__":
     if printTotals:
         print '_'*len(header)
         totals = np.sum(totals,axis=0, dtype=float)
-        print '{:15s} {:20s} {:7} {:7} {:7} {:7} {:7} {:7} {:7} {:15.3f}{:15.3f}'.format(
+        print '{:15s} {:20s} {:6} {:6} {:6} {:6} {:6} {:6} {:6} {:10.3f}{:10.3f}'.format(
                 'TOTAL','',
                 int(totals[0]),
                 int(totals[1]),
