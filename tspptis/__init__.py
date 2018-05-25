@@ -809,7 +809,7 @@ class tsAnalysis:
             break
 
     def getRates(self, fes, Astate=-1, Bstate=-1, Acorr=0, Bcorr=0, valTS=None, error=None,
-            printFile=False, printR=True, human=True):
+            printFile=False, human=True):
         """Reads the free energy surface FES, TS-PPTIS crossing probabilities
         and ouputs, calculate the rate constants and print(them to screen and/or to file.
 
@@ -873,6 +873,7 @@ class tsAnalysis:
         PBlow = np.exp(-self.beta * (offFES[iTS] + Bcorr - error)) / norm
         PBupp = np.exp(-self.beta * (offFES[iTS] + Bcorr + error)) / norm
 
+        # Get Rtst and the full R(m) vector
         Rtst, R = calcR(fes[0][iTS], probInfo=self.probInfo,
                   crossInfo=self.crossInfo)
 
@@ -887,33 +888,35 @@ class tsAnalysis:
         hsep = '_'
 
         if human:
-            msg = '{:>20} | {:>12} | {:>12} | {:>12}\n'.format('', 'Rate', 'Lower Bound', 'Upper Bound') + \
+            msg = '{:>20} | {:>12} | {:>12} | {:>12}\n'.format('', '', 'Lower Bound', 'Upper Bound') + \
                 hsep * 65 + '\n' + \
                 '{:<20} | {:>12} | {:>12} | {:>12}\n'.format('', '', '', '') + \
                 '{:<20} | {:>12.3e} | {:>12.3e} | {:>12.3e}\n'.format('kOn  [M^-1 s^-1]', kBA, kBAlow, kBAupp) + \
-                '{:<20} | {:>12} | {:>12} | {:>12}\n'.format('', '', '', '') + \
                 '{:<20} | {:>12.3e} | {:>12.3e} | {:>12.3e}\n'.format(
                     'kOff [s^-1]', kAB, kABlow, kABupp) + \
                 hsep * 65 + '\n'
 
-            if printR:
-                msg += '{:<20} | {:>12} | {:>12} | {:>12}\n'.format('', '', '', '') + \
-                       '{:<20} | {:>12.3e} | {:>12} | {:>12}\n'.format('Rtst',Rtst,'','') + \
-                       hsep * 65 + '\n' + \
-                       '\n\n{:>9} | {:>9}\n'.format('m', 'R(m)') + \
-                        hsep * 21 + '\n\n'
-                for i, r in enumerate(R):
-                    msg += '{:>5.3e} | {:>5.3e}\n'.format(i,r)
+            msg += '{:<20} | {:>12} | {:>12} | {:>12}\n'.format('', '', '', '') + \
+                   '{:<20} | {:>12.3e} | {:>12.3e} | {:>12.3e}\n'.format('P(A->TS) ', PA, PAlow, PAupp) + \
+                   '{:<20} | {:>12.3e} | {:>12.3e} | {:>12.3e}\n'.format('P(B->TS) ', PB, PBlow, PBupp) + \
+                   '{:<20} | {:>12.3e} | {:>12} | {:>12}\n'.format('Rtst [s^-1]',Rtst,'','') + \
+                   hsep * 65 + '\n' + \
+                   '\n\n{:>3} | {:>9}\n'.format('m', 'R(m)') + \
+                    hsep * 16 + '\n'
+
+            msg += '{:>3} | {:>8}\n'.format('','')
+            for i, r in enumerate(R):
+                msg += '{:>3d} | {:>5.3e}\n'.format(i,r)
 
         else:
-            # Same order as with human = True, but flattened
-            msg = '{:>12.3e} {:>12.3e} {:>12.3e} '.format(kBA, kBAlow, kBAupp) + \
-                  '{:>12.3e} {:>12.3e} {:>12.3e}\n'.format(kAB, kABlow, kABupp)
+            # Compact printing
+            # R includes Rtst (the first)
+            msg = '{:<20} {:>12.3e} {:>12.3e} {:>12.3e}\n'.format('kOn', kBA, kBAlow, kBAupp) + \
+                  '{:<20} {:>12.3e} {:>12.3e} {:>12.3e}\n'.format('kOff', kAB, kABlow, kABupp) + \
+                  '{:<20} '.format('R') + ' '.join(['{:>12.3e}'.format(r) for r in [Rtst] + R]) + '\n' \
+                  '{:<20} {:>12.3e} {:>12.3e} {:>12.3e}\n'.format('P(A->TS) ', PA, PAlow, PAupp) + \
+                  '{:<20} {:>12.3e} {:>12.3e} {:>12.3e}\n'.format('P(B->TS) ', PB, PBlow, PBupp)
 
-            if printR:
-                msg += '\n'
-                for i, r in enumerate(R):
-                    msg += '{:>5.3e} {:>5.3e}\n'.format(i,r)
 
         print(msg)
         # Add also the times tau...
