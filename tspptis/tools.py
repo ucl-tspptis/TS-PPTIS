@@ -708,21 +708,21 @@ def analyzeCross(fileName, target):
     return info
 
 
-def calcR(posTS, crossInfo, probInfo, debug=False):
+def calcR(posTS, crossInfo, probInfo):
     """ Calculates the R component of the rate constants with an iterative approach
     described by Juraszek et al. 2013
 
     Args:
         posTS (int): position of the Transition State along the path X-axis
-        crossInfo (list, mixed): list containing information on the crossing 
+        crossInfo (list, mixed): list containing information on the crossing
             events on the TS
-        probInfo (list, mixed): list containing information on the crossing 
+        probInfo (list, mixed): list containing information on the crossing
             probabilities for each window events
         debug (bool, optional): activate/deactivate the debug option
 
     Returns:
-        R (float): final approximated value of R, if debug option is activated, returns
-            vector with the value at each iteration
+        Rtst (float): Rtst
+        R (list, float): full R(m)
     """
 
     lambdas, pmm, pmp, ppm, ppp=[], [], [], [], []
@@ -757,7 +757,7 @@ def calcR(posTS, crossInfo, probInfo, debug=False):
     p0n=ncw_ends * 1.0 / ncw
 
     lambda0=getClosestLambda(posTS,lambdas)
-   
+
     A=[1, ppm[lambda0 + 1]]
     Ab=[1, pmp[lambda0 - 1]]
     R=[]
@@ -791,7 +791,7 @@ def calcR(posTS, crossInfo, probInfo, debug=False):
             Ab.append(AbiNom/AbiDen)
         else:
             Ab.append(Ab[-1])
-    
+
 
     for m in range(0, len(A)):
         RiNom=0.5 * Rtst * \
@@ -800,9 +800,7 @@ def calcR(posTS, crossInfo, probInfo, debug=False):
             (1 - ppm[lambda0] - pmp[lambda0]) * A[m] * Ab[m]
         R.append(RiNom / RiDen)
 
-    if debug == True:
-        return R
-    return R[-1]
+    return Rtst, R
 
 def plumed2List(fileName):
     """Read a monodimensional free energy profile fes.dat file in Plumed 2 format

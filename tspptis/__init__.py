@@ -717,6 +717,7 @@ class tsAnalysis:
 
             # check ppm pmm pmp ppp order as it may be wrong!
 
+
             if 'AB' not in dState or 'AA' not in dState:
                 # not sure why the second condition is necessary...
                 ppm = float('inf')
@@ -807,7 +808,8 @@ class tsAnalysis:
             # no need to check the other folders if we got to this point
             break
 
-    def getRates(self, fes, Astate=-1, Bstate=-1, Acorr=0, Bcorr=0, valTS=None, error=None, printFile=False, human=True):
+    def getRates(self, fes, Astate=-1, Bstate=-1, Acorr=0, Bcorr=0, valTS=None, error=None,
+            printFile=False, printR=True, human=True):
         """Reads the free energy surface FES, TS-PPTIS crossing probabilities
         and ouputs, calculate the rate constants and print(them to screen and/or to file.
 
@@ -828,6 +830,7 @@ class tsAnalysis:
             error (float, optional): free energy error to calculate the rates range,
                 if none provided automatically assume 1 kT
             printFile (bool, optional): activate/deactivate printing to file
+            printR (bool, optional): print R(m)
             human (bool, optional): formatted printing or just the raw numbers (flattened)
 
         """
@@ -870,29 +873,47 @@ class tsAnalysis:
         PBlow = np.exp(-self.beta * (offFES[iTS] + Bcorr - error)) / norm
         PBupp = np.exp(-self.beta * (offFES[iTS] + Bcorr + error)) / norm
 
-        R = calcR(fes[0][iTS], probInfo=self.probInfo,
+        Rtst, R = calcR(fes[0][iTS], probInfo=self.probInfo,
                   crossInfo=self.crossInfo)
 
-        kAB = PA * R * 1e12
-        kABlow = PAlow * R * 1e12
-        kABupp = PAupp * R * 1e12
+        kAB    = PA * R[-1] * 1e12
+        kABlow = PAlow * R[-1] * 1e12
+        kABupp = PAupp * R[-1] * 1e12
 
-        kBA = PB * R * 1e12
-        kBAlow = PBlow * R * 1e12
-        kBAupp = PBupp * R * 1e12
+        kBA    = PB * R[-1] * 1e12
+        kBAlow = PBlow * R[-1] * 1e12
+        kBAupp = PBupp * R[-1] * 1e12
+
+        hsep = '_'
 
         if human:
             msg = '{:>20} | {:>12} | {:>12} | {:>12}\n'.format('', 'Rate', 'Lower Bound', 'Upper Bound') + \
-                '_' * 65 + '\n' + \
+                hsep * 65 + '\n' + \
                 '{:<20} | {:>12} | {:>12} | {:>12}\n'.format('', '', '', '') + \
                 '{:<20} | {:>12.3e} | {:>12.3e} | {:>12.3e}\n'.format('kOn  [M^-1 s^-1]', kBA, kBAlow, kBAupp) + \
                 '{:<20} | {:>12} | {:>12} | {:>12}\n'.format('', '', '', '') + \
                 '{:<20} | {:>12.3e} | {:>12.3e} | {:>12.3e}\n'.format(
-                    'kOff [s^-1]', kAB, kABlow, kABupp)
+                    'kOff [s^-1]', kAB, kABlow, kABupp) + \
+                hsep * 65 + '\n'
+
+            if printR:
+                msg += '{:<20} | {:>12} | {:>12} | {:>12}\n'.format('', '', '', '') + \
+                       '{:<20} | {:>12.3e} | {:>12} | {:>12}\n'.format('Rtst',Rtst,'','') + \
+                       hsep * 65 + '\n' + \
+                       '\n\n{:>9} | {:>9}\n'.format('m', 'R(m)') + \
+                        hsep * 21 + '\n\n'
+                for i, r in enumerate(R):
+                    msg += '{:>5.3e} | {:>5.3e}\n'.format(i,r)
+
         else:
             # Same order as with human = True, but flattened
             msg = '{:>12.3e} {:>12.3e} {:>12.3e} '.format(kBA, kBAlow, kBAupp) + \
-                  '{:>12.3e} {:>12.3e} {:>12.3e}'.format(kAB, kABlow, kABupp)
+                  '{:>12.3e} {:>12.3e} {:>12.3e}\n'.format(kAB, kABlow, kABupp)
+
+            if printR:
+                msg += '\n'
+                for i, r in enumerate(R):
+                    msg += '{:>5.3e} {:>5.3e}\n'.format(i,r)
 
         print(msg)
         # Add also the times tau...
