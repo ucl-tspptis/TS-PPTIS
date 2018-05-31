@@ -33,7 +33,7 @@ def sigmoid(x,ref=0.0,beta=1.0):
     Returns:
         (float): value of the sigmoid function at the input point
     """
-   
+
     if beta*(x-ref)>np.log(9999): return 1
     return 1-1/(1+np.exp(beta*(x-ref)))
 
@@ -42,7 +42,7 @@ def convInt(text):
     """Takes an input and returns it as itself or as int if it's a digit.
 
     Args:
-        text (string or number): input text 
+        text (string or number): input text
 
     Returns:
         (string or int): the input converted to int if a digit
@@ -54,7 +54,7 @@ def natural_keys(text):
     """Help function to sort in human friendly order.
 
     Args:
-        text (string or number): input text 
+        text (string or number): input text
 
     Returns:
         (list,tring or int): list with the components of the splitted input
@@ -66,18 +66,18 @@ def getNumRows(nameFile):
     """Count the number of rows in a file. Returns 0 if the file does not exist.
 
     Args:
-        nameFile (string): path to  text file 
+        nameFile (string): path to  text file
 
     Returns:
         nrows (int) number of rows in the file
     """
-    
+
     try:
         data = open(nameFile, 'r')
         nrows=len(data.readlines())
     except:
         nrows=0
-    
+
     return nrows
 
 
@@ -566,9 +566,9 @@ def setTmax(mdpFile, tmax, timestep):
 
 
 def getLambda(pathToFile):
-    """Extracts the lambda value of a window from the window.cfg file in its 
+    """Extracts the lambda value of a window from the window.cfg file in its
     pptis output folder.
-        
+
     Args:
         pathToFile (string): path to the folder containing th window.cfg file
 
@@ -585,7 +585,7 @@ def getLambda(pathToFile):
 def getWeightTraj(pathToFile, index):
     """Extracts the weights from the rejected trajectory file, to be used
     when calculating velocities in crossing events.
-        
+
     Args:
         pathToFile (string): path to the tps_rej.dat file
         index (string or int): trajectory index from which to count the weights
@@ -610,9 +610,9 @@ def analyzeCross(fileName, target):
     on the crossing events.
 
     Args:
-        fileName (string): path to the input .info file        
+        fileName (string): path to the input .info file
         target (float): the position of the windows to analyze in the CV space
-    
+
     Returns:
         info (dictionary): a ditctionary containing information on velocities
             and number of crossing events to be used in the calculation of the
@@ -626,35 +626,43 @@ def analyzeCross(fileName, target):
     #like this, but let's consider moving everything into tps_acc.log
 
     cv,vel,crEvent,side=[],[],[],[]
-    
+
+    # INFO file fields: TIME, LPF, TIS CV, SIDE, CROSS, CROSS_SPEED
+
     data = open(fileName,"r")
     for line in data.readlines():
         if line[0]!='#' and line!='\n':
             read=line.split()
-            cv.append(np.float(read[1])) #not needed
+            cv.append(np.float(read[1])) #LFP. not needed
             #clean this 
-            if len(read)>4:
-                crEvent.append(np.int(read[4]))
-            side.append(np.int(read[3])) #not needed
+            if len(read)>4: # (which is true for every line apart from the last)
+                crEvent.append(np.int(read[4])) # cross direction (-1/0/+1)
+            side.append(np.int(read[3])) #SIDE (-1/+1). not needed
             if len(read)>5:
+                # For every crossing
+                # SHOULDN'T IT BE ONLY FOR CROSSINGS OF THE CENTRAL INTERFACE?
                 vel.append(np.float(read[-1]))
     data.close()
- 
+
     vlist = []  #only for logging purposes
-    cross = False    
+    cross = False
 
 
 ######### Old version, please remove
 #None of this seems to be needed if not for logging...
-    n = 0
-    average = 0
-    p0p,p0m = 0,0
-    posCross,negCross = 0,0
-      
+    n = 0                   # Number of crossing events
+    average = 0             # ?
+    p0p,p0m = 0,0           # Count of how many frames are spent before and after the interface?
+    posCross,negCross = 0,0 # Crossing event count
+
     for i in range(1,len(cv)):
-    
+        # Iterate recorded crossings, weed out inital and final interface crossings
+
         crossnow = False
         hit=''
+        # Since direction is defined only in the if statement, shouldn't the
+        # next "if" crash if a crossing is not detected from the very beggining
+        # of the loop?
         if  cv[i-1] < target  and  cv[i] >= target :
             cross = True
             direction = 1
@@ -663,24 +671,32 @@ def analyzeCross(fileName, target):
             cross = True
             direction = -1
             crossnow = True
-      
-        if  cross and direction > 0 and cv[i] >= target+1: 
+
+        # Why target +-1?
+        # By not resetting direction and cross they
+        # will keep the value of the previous crossing.
+        # Are p0p/p0m a cumulative count of how many frames
+        # are spent on either side of the interface?
+
+        # Hit doesn't seem to be used anywhere
+        if  cross and direction > 0 and cv[i] >= target+1:
             hit= '+'
             p0p+=1
-        elif  cross and direction < 0 and cv[i] <= target-1: 
+        elif  cross and direction < 0 and cv[i] <= target-1:
             hit= '-'
             p0m+=1
-                
-        if  crossnow:
-            average += np.abs(cv[i-1] - cv[i]) 
-            n+=1 
-            vlist.append(cv[i] - cv[i-1])  #only for logging
+
+        if  crossnow: # Trigger only if a crossing is detected in the current line
+            average += np.abs(cv[i-1] - cv[i]) # Append midpoint of the crossing?
+            n+=1                               # Update number of crossing events
+            vlist.append(cv[i] - cv[i-1])       # Only for logging
             if direction>0:
                 posCross += 1
             elif direction<0:
                 negCross += 1
-           
-        if cv[i] >= target+1: #why + and - 1???
+
+        # Doesn't appear to be used anywhere
+        if cv[i] >= target+1: # why + and - 1???
             end = '+'
         elif cv[i] <= target-1:
             end = '-'
@@ -688,23 +704,26 @@ def analyzeCross(fileName, target):
 
 
     if len(vel) > 0:
+        # If at least one crossing has been recorded average them
         avrVel=np.mean(vel)
-    else: avrVel = 0 
+    else: avrVel = 0
 
     if p0p>1: p0p=1
     if p0m>1: p0m=1
-       
+
     info={}
-    info['vel']=avrVel
-    info['p0p']=p0p #only for logging
-    info['p0m']=p0m #only for logging
-    info['nrPos']=np.sum([1 if c>0 else 0 for c in crEvent])
-    info['nrNeg']=np.sum([1 if c<0 else 0 for c in crEvent])
+    info['vel']=avrVeli         # Average crossing velocity
+    info['p0p']=p0p             # only for logging
+    info['p0m']=p0m             # only for logging
+    # Why not use posCross/negCross for this?
+    info['nrPos']=np.sum([1 if c>0 else 0 for c in crEvent]) # n positive crossings
+    info['nrNeg']=np.sum([1 if c<0 else 0 for c in crEvent]) # n negative crossings
+    # Endpoint
     if side[-1]>0:
         info['end']='+'   #we can cange this to a smarter 0/1 later
     else:
         info['end']='-'
-        
+
     return info
 
 
@@ -737,6 +756,8 @@ def calcR(posTS, crossInfo, probInfo):
 
     vel, we, pc, nc, ends=[], [], [], [], []
 
+    # crossInfo: fi[:4], crossData['vel'], crossData['nrPos'], crossData['nrNeg'], weight, crossData['end']
+    # Where fi = .info file name ([:4] to skip "rej_")
     for line in crossInfo:
         vel.append(float(line[1]))
         we.append(int(line[4]))
@@ -818,8 +839,8 @@ def plumed2List(fileName):
     for line in open(fileName,'r'):
         line=line.split()
         if line[0]!='#!' and len(line)>0:
-            f1.append(float(line[0])),f2.append(float(line[1])) 
-    
+            f1.append(float(line[0])),f2.append(float(line[1]))
+
     fesList.append(f1), fesList.append(f2)
 
     return fesList

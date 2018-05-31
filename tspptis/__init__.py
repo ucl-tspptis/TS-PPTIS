@@ -675,38 +675,47 @@ class tsAnalysis:
 
         listFold = sorted(listFold, key=natural_keys)
 
+        # Get central interface of the windows
         for window in listFold:
             target = getLambda(window)
            # nAcc=getNumRows(folderName+window+'/tps_acc.log')
            # nRej=getNumRows(folderName+window+'/tps_rej.log')
 
+            # acc. traj ID, rej. traj ID, initial state, final state
             tAcc, tRej, iState, fState = [], [], [], []
             dRej, dState = {}, {}
 
+            # Extract data from tps_acc.log
             dataAcc = open(window + '/tps_acc.log', 'r')
             for line in dataAcc:
                 if line[0] != '#':
                     line = line.split()
                     # not really needed, I'm going to leave them for now
-                    tAcc.append(np.int(line[0]))
-                    iState.append(line[4])
-                    fState.append(line[5])
+                    tAcc.append(np.int(line[0]))    # accepted traj number
+                    iState.append(line[4])          # initial state
+                    fState.append(line[5])          # final state
 
                     # not sure about this dictionary
+                    #
+                    # dState holds the AA/AB/BA/BB combinations and its counts
                     if line[4] + line[5] not in dState:
+                        # If combination does not exists then create it
                         dState[line[4] + line[5]] = 0
+                    # Increase count
                     dState[line[4] + line[5]] += 1
+
                 # there's a statement in Giorgio's scripts about weights
                 # on these variables, but it seems to be avoided through
                 # a "next" in the loop... check it out!
             dataAcc.close()
 
+            # Extract data from tps_rej.log
             dataRej = open(window + '/tps_rej.log', 'r')
             for line in dataRej:
                 if line[0] != '#':
                     line = line.split()
                     # not really needed, I'm going to leave it for now
-                    tRej.append(np.int(line[0]))
+                    tRej.append(np.int(line[0])) # rejected traj number
 
                     # not sure about this dictionary
                     if np.int(line[0]) not in dRej:
@@ -718,14 +727,17 @@ class tsAnalysis:
             # check ppm pmm pmp ppp order as it may be wrong!
 
 
+            # if A* not present then set ppm and pmm to inf
             if 'AB' not in dState or 'AA' not in dState:
                 # not sure why the second condition is necessary...
                 ppm = float('inf')
                 pmm = float('inf')
             else:
+                # pmm = AB / (AB + AA) and vice versa
                 ppm = dState['AB'] * 1.0 / (dState['AB'] + dState['AA'])
                 pmm = 1 - ppm
 
+            # Same with B*
             if 'BA' not in dState or 'BB' not in dState:
                 # not sure why the second condition is necessary...
                 pmp = float('inf')
@@ -734,8 +746,11 @@ class tsAnalysis:
                 pmp = dState['BA'] * 1.0 / (dState['BA'] + dState['BB'])
                 ppp = 1 - pmp
 
+            # Save everything to file
             output.write('{:s}'.format(window[window.rfind('/') + 1:]) + '\t' + '{:.2f}'.format(target) + '\t' +
                          '{:.2f}'.format(pmm) + '\t' + '{:.2f}'.format(ppm) + '\t' + '{:.2f}'.format(pmp) + '\t' + '{:.2f}'.format(ppp) + '\n')
+
+            # Create array to be passed
             self.probInfo.append([target, pmm, ppm, pmp, ppp])
 
         output.close()
