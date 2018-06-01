@@ -806,6 +806,7 @@ class tsAnalysis:
                     window + '/data/' + fi, target)  # see tools
                 pp += crossData['p0p']  # not needed?
                 pm += crossData['p0m']  # not needed?
+                # Count how many failed trajectories with that index have been recorded
                 weight = getWeightTraj(
                     window + '/tps_rej.log', fi[:4])  # see tools
                 velSum += crossData['vel'] * weight  # not needed?
@@ -815,7 +816,8 @@ class tsAnalysis:
                 if crossData['vel'] > 0:  # but why only positive vel?
                     output.write('{:s}'.format(fi[:4]) + '\t' + '{:.4f}'.format(crossData['vel']) + '\t' + '{:d}'.format(crossData['nrPos']) + '\t' +
                                  '{:d}'.format(crossData['nrNeg']) + '\t' + '{:d}'.format(weight) + '\t' + crossData['end'] + '\n')
-                    # a bit redundant at the moment
+                    # a bit redundant at the moment.
+                    # Save info about the current shot
                     self.crossInfo.append(
                         [fi[:4], crossData['vel'], crossData['nrPos'], crossData['nrNeg'], weight, crossData['end']])
             output.close()
@@ -855,11 +857,14 @@ class tsAnalysis:
         else:
             As = Astate
 
+        # *MAKE SURE* to remove the part were wall potential is being applied
+        # in the case where Bstate is not provided
         if Bstate == -1:
             Bs = len(fes[1]) - 1
         else:
             Bs = Bstate
 
+        # Same here
         if valTS == None or valTS > np.max(fes[0]) or valTS < np.min(fes[0]):
             iTS = np.argmax(fes[1])
         else:
@@ -868,23 +873,27 @@ class tsAnalysis:
         if error == None:
             error = 1 / self.beta
 
+        # Shift everything in order for TS to have FE=0
         offFES = [f - fes[1][iTS] for f in fes[1]]
 
+        # P(A->TS)
         norm = 0
         for i in range(As, iTS):
+            # Partition function
             norm += 0.5 * (np.exp(-self.beta * offFES[i + 1]) + np.exp(-self.beta *
                                                                        offFES[i])) * (fes[0][i + 1] - fes[0][i])
-        PA = np.exp(-self.beta * (offFES[iTS] + Acorr)) / norm
 
+        PA = np.exp(-self.beta * (offFES[iTS] + Acorr)) / norm
         PAlow = np.exp(-self.beta * (offFES[iTS] + Acorr - error)) / norm
         PAupp = np.exp(-self.beta * (offFES[iTS] + Acorr + error)) / norm
 
+        # P(B->TS)
         norm = 0
         for i in range(iTS, Bs - 1):
             norm += 0.5 * (np.exp(-self.beta * offFES[i + 1]) + np.exp(-self.beta *
                                                                        offFES[i])) * (fes[0][i + 1] - fes[0][i])
-        PB = np.exp(-self.beta * (offFES[iTS] + Bcorr)) / norm
 
+        PB = np.exp(-self.beta * (offFES[iTS] + Bcorr)) / norm
         PBlow = np.exp(-self.beta * (offFES[iTS] + Bcorr - error)) / norm
         PBupp = np.exp(-self.beta * (offFES[iTS] + Bcorr + error)) / norm
 

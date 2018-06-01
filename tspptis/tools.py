@@ -633,7 +633,7 @@ def analyzeCross(fileName, target):
     for line in data.readlines():
         if line[0]!='#' and line!='\n':
             read=line.split()
-            cv.append(np.float(read[1])) #LFP. not needed
+            cv.append(np.float(read[2])) #not needed
             #clean this 
             if len(read)>4: # (which is true for every line apart from the last)
                 crEvent.append(np.int(read[4])) # cross direction (-1/0/+1)
@@ -672,7 +672,9 @@ def analyzeCross(fileName, target):
             direction = -1
             crossnow = True
 
-        # Why target +-1?
+        # Why target +-1? --> the offset makes it impossible for the condition of be ever true,
+        # given a distance-based CV. But p0p and p0m aren't actually used, although they are returned.
+
         # By not resetting direction and cross they
         # will keep the value of the previous crossing.
         # Are p0p/p0m a cumulative count of how many frames
@@ -712,7 +714,7 @@ def analyzeCross(fileName, target):
     if p0m>1: p0m=1
 
     info={}
-    info['vel']=avrVeli         # Average crossing velocity
+    info['vel']=avrVel         # Average crossing velocity
     info['p0p']=p0p             # only for logging
     info['p0m']=p0m             # only for logging
     # Why not use posCross/negCross for this?
@@ -754,10 +756,12 @@ def calcR(posTS, crossInfo, probInfo):
         ppm.append(float(line[3]))
         ppp.append(float(line[4]))
 
+    # crossing speed, weight, positive crossing, negative crossing, end point
     vel, we, pc, nc, ends=[], [], [], [], []
 
-    # crossInfo: fi[:4], crossData['vel'], crossData['nrPos'], crossData['nrNeg'], weight, crossData['end']
-    # Where fi = .info file name ([:4] to skip "rej_")
+    # crossInfo (for each shot):
+    #   fi[:4], crossData['vel'], crossData['nrPos'], crossData['nrNeg'], weight, crossData['end']
+    # Where fi = .info file name ([:4] to skip the extension)
     for line in crossInfo:
         vel.append(float(line[1]))
         we.append(int(line[4]))
@@ -766,25 +770,35 @@ def calcR(posTS, crossInfo, probInfo):
         ends.append(line[5])
 
     ends=np.asarray(ends)
+    # Rtst = 1/2 * sum_i(weight_i) / sum_i(weight_i / velocity_i)
     Rtst=0.5 * np.sum(we) / np.sum([w / v for w, v in zip(we, vel)])
 
+    # pcw = sum_i(positiveCross_i * weight_i)
     pcw=np.sum([p * w for p, w in zip(pc, we)])
     ncw=np.sum([n * w for n, w in zip(nc, we)])
 
+    # How many + or - endpoint
     pcw_ends=np.sum(np.ma.masked_where(ends == '-', we))
     ncw_ends=np.sum(np.ma.masked_where(ends == '+', we))
 
+    # p0p = +_endpoints * pcw^-1
     p0p=pcw_ends * 1.0 / pcw
     p0n=ncw_ends * 1.0 / ncw
 
+    # lambdas: available interfaces
+    # lambda0: index of TS in the lambdas list 
     lambda0=getClosestLambda(posTS,lambdas)
 
     A=[1, ppm[lambda0 + 1]]
+    # If lambda0 = 0 then it wraps back to the last
+    # element of pmp. Is it ok?
     Ab=[1, pmp[lambda0 - 1]]
     R=[]
 
     for i in range(2, numWindows):
         m=i - 2
+
+        # Run until you run out of windows
         if lambda0 + m + 1 > len(ppm) - 1 and lambda0 - m - 1 < 0:
             break
 
