@@ -3,7 +3,7 @@
 
 ## Version 2.0
 
-New python implementation of TS-PPTIS for Gromacs 5.X and Plumed 2.X
+New python implementation of TS-PPTIS for Gromacs 5.X/2016/2018 and Plumed 2.X
 Based on scripts by G. Saladino and J. Juraszek \@2014-2016
 
 For reference see
