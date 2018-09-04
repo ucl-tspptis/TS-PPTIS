@@ -6,7 +6,9 @@
 New python implementation of TS-PPTIS for Gromacs 5.X/2016/2018 and Plumed 2.X
 Based on scripts by G. Saladino and J. Juraszek \@2014-2016
 
-For reference see
+This version is **UNDER DEVELOPMENT**.
+
+For reference see:
 
 Juraszek J, Saladino G, van Erp TS, and Gervasio FL, \"Efficient
 numerical reconstruction of protein folding kinetics with partial path
@@ -94,7 +96,7 @@ which gives you more control on the tspptis parameters:
     #After the simulation terminates, finalize
     ts.finalizeTPS('../testfiles/pptis10')
 
-    #Repeat the two steps above if neede, then proceed to the analysis
+    #Repeat the two steps above until convergence, then proceed to the analysis
     tsa = tsAnalysis('./pptisoutput')
 
     #Get probabilities and crossings analysis at a given TS of 1.25
@@ -104,10 +106,6 @@ which gives you more control on the tspptis parameters:
     #Finally extract the Rates, after converting the fes if needed
     fesList=plumed2List('./outputs/fes.dat')
     tsa.getRates(fesList,valTS=1.25)
-
-    #If desired, check the Memory Loss Assumption
-    tsa.endPointVel()
-    tsa.checkMLA(plot=True)
 
 ## Contributors
 
